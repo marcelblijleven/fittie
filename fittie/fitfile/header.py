@@ -3,6 +3,8 @@ from typing import BinaryIO
 
 import struct
 
+from fittie.fitfile.utils import get_length_of_binaryio
+
 
 class FitFileHeader:
     """
@@ -46,7 +48,12 @@ class FitFileHeader:
         else:
             crc = 0x0000
 
-        return cls(length, protocol_version, profile_version, data_size, data_type, crc)
+        header = cls(length, protocol_version, profile_version, data_size, data_type, crc)
+
+        if not header.is_valid(data):
+            raise ValueError('provided data is not a valid FIT file')
+
+        return header
 
     # Alias for from_data
     decode = from_data
@@ -66,6 +73,24 @@ class FitFileHeader:
             values += (self.crc,)
 
         return struct.pack(fmt, *values)
+
+    def is_valid(self, data: BinaryIO) -> bool:
+        """
+        Checks whether the FIT file is valid by checking the header length and
+        the total size of incoming data
+
+        - Header length should be 12 or 14
+        - The length of the incoming data should be equal to the length attribute +
+          data_size attribute + two for the crc value
+        """
+
+        if self.length != 12 and self.length != 14:
+            return False
+
+        if get_length_of_binaryio(data) != self.length + self.data_size + 2:
+            return False
+
+        return True
 
     def __repr__(self):
         return str(self)

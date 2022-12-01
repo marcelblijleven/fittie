@@ -1,6 +1,13 @@
+import os
 import struct
+from typing import BinaryIO, Tuple, Any, TYPE_CHECKING
 
 from uuid import UUID
+
+from fittie.fitfile.profile import BASE_TYPES, FIT_TYPES
+
+if TYPE_CHECKING:
+    from fittie.fitfile.records import FieldDefinition
 
 
 def check_crc() -> bool:
@@ -36,21 +43,53 @@ def rollover_timestamp(previous_timestamp: int, offset: int) -> int:
     return timestamp
 
 
-def uuid_to_bytes(uuid: UUID, endianness: str = '<') -> bytes:
+def uuid_to_bytes(uuid: UUID, endianness: str = "<") -> bytes:
     """Convert a 128 bit UUID to bytes"""
     # TODO: check if uuid.bytes works too
 
-    fmt = f'{endianness}QQ'
+    fmt = f"{endianness}QQ"
     # Split the 128 bit UUID into two parts with bit shifting
     max_value = 0xFFFFFFFFFFFFFFFF  # max value for a int64
     return struct.pack(fmt, (uuid.int >> 64) & max_value, uuid.int & max_value)
 
 
-def bytes_to_uuid(data: bytes, endianness: str = '<') -> UUID:
+def bytes_to_uuid(data: bytes, endianness: str = "<") -> UUID:
     """Convert bytes to a UUID"""
     # TODO: check if UUID(bytes=data) works too
-    fmt = f'{endianness}QQ'
+    fmt = f"{endianness}QQ"
     part_a, part_b = struct.unpack(fmt, data)
     uuid_int = (part_a << 64) | part_b
 
     return UUID(int=uuid_int)
+
+
+def read_value_by_type_name(type_name: str, data: BinaryIO) -> None:
+    ...
+
+
+def read_value_by_type_number(type_number: int, data: BinaryIO) -> None:
+    # TODO: check for developer types
+    base_type = BASE_TYPES[type_number]
+    value = base_type.get_value(data)
+
+
+def get_raw_value_for_field(field: 'FieldDefinition', data: BinaryIO) -> tuple[Any, str]:
+    (raw_value,) = struct.unpack(
+        field.base_type.fmt,
+        data.read(field.base_type.size)
+    )
+
+    return raw_value
+
+
+def get_length_of_binaryio(data: BinaryIO) -> int:
+    """Reads the length of the provided data"""
+    if hasattr(data, 'getvalue'):
+        return len(data.getvalue())
+
+    current_pos: int = data.tell()
+    data.seek(0, os.SEEK_END)
+
+    length = data.tell()
+    data.seek(current_pos)
+    return length

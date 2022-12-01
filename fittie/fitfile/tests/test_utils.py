@@ -1,6 +1,8 @@
+from io import BytesIO
 from uuid import UUID
 
-from fittie.fitfile.utils import rollover_timestamp, uuid_to_bytes, bytes_to_uuid
+from fittie.fitfile.utils import rollover_timestamp, uuid_to_bytes, bytes_to_uuid, \
+    get_length_of_binaryio
 
 
 def test_rollover_timestamp():
@@ -25,10 +27,19 @@ def test_rollover_timestamp():
 
 
 def test_uuid_to_bytes():
-    uuid = UUID('728d3309-139b-4a6d-b30e-f50cf0794c12')
-    assert uuid_to_bytes(uuid) == b'mJ\x9b\x13\t3\x8dr\x12Ly\xf0\x0c\xf5\x0e\xb3'
+    uuid = UUID("728d3309-139b-4a6d-b30e-f50cf0794c12")
+    assert uuid_to_bytes(uuid) == b"mJ\x9b\x13\t3\x8dr\x12Ly\xf0\x0c\xf5\x0e\xb3"
 
 
 def test_bytes_to_uuid():
-    uuid = UUID('728d3309-139b-4a6d-b30e-f50cf0794c12')
-    assert bytes_to_uuid(b'mJ\x9b\x13\t3\x8dr\x12Ly\xf0\x0c\xf5\x0e\xb3') == uuid
+    uuid = UUID("728d3309-139b-4a6d-b30e-f50cf0794c12")
+    assert bytes_to_uuid(b"mJ\x9b\x13\t3\x8dr\x12Ly\xf0\x0c\xf5\x0e\xb3") == uuid
+
+
+def test_get_length_of_binaryio():
+    with open('data/sample_file.txt', 'rb') as f:
+        assert get_length_of_binaryio(f) == 42
+
+    assert get_length_of_binaryio(
+        BytesIO(b'this is for testing binaryio (file) utils!')
+    ) == 42
