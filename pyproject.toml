@@ -1,0 +1,20 @@
+[project]
+name = "fittie"
+version = "0.0.1"
+description = "FIT file tool"
+authors = [
+    { name = "Marcel Blijleven" }
+]
+maintainers = [
+    { name = "Marcel Blijleven" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+urls = { repository = "https://github.com/marcelblijleven/fittie" }
+classifiers = [
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
