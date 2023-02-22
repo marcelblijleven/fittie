@@ -42,6 +42,12 @@ dev = [
 Homepage = "https://github.com/marcelblijleven/fittie"
 repository = "https://github.com/marcelblijleven/fittie"
 
+[tool.setuptools.packages.find]
+exclude = [
+    "scripts",
+    "tests"
+]
+
 [tool.ruff]
 line-length = 88
 exclude = [
