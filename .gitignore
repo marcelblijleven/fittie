@@ -138,3 +138,6 @@ scripts/data/*
 # Exclude any .fit file
 *.fit
 *.FIT
+
+# Exclude .idea
+.idea
