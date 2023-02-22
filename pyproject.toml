@@ -15,7 +15,6 @@ maintainers = [
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
-urls = { repository = "https://github.com/marcelblijleven/fittie" }
 keywords = [
     "fit",
     "fitfile",
@@ -41,6 +40,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/marcelblijleven/fittie"
+repository = "https://github.com/marcelblijleven/fittie"
 
 [tool.ruff]
 line-length = 88
