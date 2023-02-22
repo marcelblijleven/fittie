@@ -1,3 +1,5 @@
+from __future__ import annotations  # Added for type hints
+
 from typing import BinaryIO, Any, Optional, TYPE_CHECKING
 
 from fittie.exceptions import DecodeException

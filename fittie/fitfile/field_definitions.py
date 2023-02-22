@@ -1,3 +1,5 @@
+from __future__ import annotations  # Added for type hints
+
 import struct
 from typing import BinaryIO, Any
 
@@ -52,7 +54,7 @@ class FieldDefinition:
         self.base_type = base_type
 
     def __str__(self) -> str:
-        return (f"FieldDefinition:{self.number=}{self.size=}{self.base_type=}").replace(
+        return f"FieldDefinition:{self.number=}{self.size=}{self.base_type=}".replace(
             "self.", " "
         )
 

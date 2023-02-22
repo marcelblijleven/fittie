@@ -1,3 +1,5 @@
+from __future__ import annotations  # Added for type hints
+
 import logging
 import os
 

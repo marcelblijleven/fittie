@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 FIT_EPOCH = 631065600
 UTC = ZoneInfo("UTC")
 
+
 def rollover_timestamp(previous_timestamp: int, offset: int) -> int:
     """
     Apply the compressed timestamp offset to the previous timestamp
