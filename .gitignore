@@ -130,3 +130,11 @@ dmypy.json
 
 # Ruff cache
 .ruff_cache
+
+# Don't include .csv files from Garmin
+scripts/data/*
+!scripts/data/README.md
+
+# Exclude any .fit file
+*.fit
+*.FIT
