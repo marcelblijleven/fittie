@@ -1,6 +1,6 @@
 import logging
 import os
-import struct
+
 from collections import defaultdict
 from typing import BinaryIO, Any, DefaultDict, Optional
 
