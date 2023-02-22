@@ -1,12 +1,12 @@
 import copy
 
-from functools import cache
+from functools import lru_cache
 
 from fittie.fitfile.profile.message_profile import MessageProfile
 from fittie.fitfile.profile.messages import MESSAGES
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_message_profile(number: int) -> MessageProfile:
     if number not in MESSAGES:
         raise ValueError(f'unknown message number "{number}"')
