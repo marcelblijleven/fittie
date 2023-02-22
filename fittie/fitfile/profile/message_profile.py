@@ -1,3 +1,5 @@
+from __future__ import annotations  # added for type hints
+
 from dataclasses import dataclass
 from typing import Union, Optional
 
