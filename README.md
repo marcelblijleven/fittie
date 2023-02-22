@@ -2,6 +2,12 @@
 
 Parse Garmin .FIT files
 
+[![PyPI version](https://badge.fury.io/py/fittie.svg)](https://badge.fury.io/py/fittie)
+
+```shell
+pip install fittie
+```
+
 ## Usage
 
 ```python
