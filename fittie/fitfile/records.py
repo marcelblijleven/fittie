@@ -129,7 +129,7 @@ def read_record(
             f"{record_header.local_message_type}",
             position=data.tell(),
         )
-    global_mesg = definition_message.global_message_type
+
     message = decode_data_message(
         record_header, definition_message, developer_data, data
     )

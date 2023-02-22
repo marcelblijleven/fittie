@@ -130,7 +130,6 @@ def decode(data: BinaryIO) -> FitFile:
 
             messages[MESG_NUMS[global_message_type]].append(message)
 
-    crc = struct.unpack("H", data.read(2))
-
     fitfile = FitFile(header=header, messages=messages)
+
     return fitfile
