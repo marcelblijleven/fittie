@@ -21,4 +21,15 @@ classifiers = [
 
 [tool.ruff]
 line-length = 88
-exclude = [".git", "*.json"]
+exclude = [
+    ".git",
+    "*.json",
+    "fittie/fitfile/profile/fit_types.py"
+]
+
+[tool.coverage.run]
+omit = [
+    "fittie/fitfile/profile/fit_types.py",
+    "fittie/fitfile/profile/mesg_nums.py",
+    "fittie/fitfile/profile/messages.py"
+]
