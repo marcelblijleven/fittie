@@ -1,8 +1,9 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from typing import BinaryIO, Optional, Any
+from typing import Optional, Any
 
+from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
 from fittie.fitfile.data_message import decode_data_message
 from fittie.fitfile.definition_message import (
@@ -56,7 +57,7 @@ class RecordHeader:
         ).replace("self.", " ")
 
 
-def read_record_header(data: BinaryIO) -> RecordHeader:
+def read_record_header(data: Streamable) -> RecordHeader:
     try:
         (value,) = struct.unpack("B", data.read(1))
 
@@ -110,7 +111,7 @@ def read_record(
     record_header: RecordHeader,
     definition_message: Optional[DefinitionMessage],
     developer_data: dict[int, dict[str, Any]],
-    data: BinaryIO,
+    data: Streamable,
 ) -> Any:  # TODO: add ABC Message type
     if record_header.is_compressed_timestamp_message:
         # TODO

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import struct
-from typing import Optional, BinaryIO
+from typing import Optional
+
+from fittie.datastream import Streamable
 
 
 class BaseType:
-    """Garmin FIT File Base Type"""
+    """Representation of a Garmin FIT File Base Type"""
 
     number: int
     endian_ability: int
@@ -43,8 +45,9 @@ class BaseType:
         return str(self)
 
     def get_value(
-        self, endianness: str, data: BinaryIO
+        self, endianness: str, data: Streamable
     ) -> Optional[BaseType.value_type]:
+        # TODO: check for endian ability before creating fmt_string?
         fmt_string = f"{endianness}{self.fmt}"
 
         (value,) = struct.unpack(fmt_string, data.read(self.size))

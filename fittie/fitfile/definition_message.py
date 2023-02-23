@@ -1,8 +1,9 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from typing import TYPE_CHECKING, Optional, BinaryIO
+from typing import TYPE_CHECKING, Optional
 
+from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
 from fittie.fitfile.field_definitions import (
     FieldDefinition,
@@ -10,7 +11,7 @@ from fittie.fitfile.field_definitions import (
     decode_field_definition,
     decode_developer_field_definition,
 )
-from fittie.util import Endianness
+from fittie.endianness import Endianness
 
 if TYPE_CHECKING:
     from fittie.fitfile.records import RecordHeader
@@ -81,7 +82,7 @@ class DefinitionMessage:
 
 
 def decode_definition_message(
-    header: "RecordHeader", data: BinaryIO
+    header: "RecordHeader", data: Streamable
 ) -> DefinitionMessage:
     if not header.is_definition_message:
         raise DecodeException(

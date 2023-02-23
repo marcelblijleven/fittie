@@ -4,12 +4,14 @@ import logging
 import os
 
 from collections import defaultdict
-from typing import BinaryIO, Any, DefaultDict, Optional
+from pathlib import Path
+from typing import Any, DefaultDict, Optional, Union
 
+from fittie.datastream import DataStream, Streamable
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
+from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.header import Header, decode_header
-from fittie.fitfile.profile.base_types import BASE_TYPES
 from fittie.fitfile.profile.fit_types import FIT_TYPES
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.records import read_record_header, read_record
@@ -21,6 +23,7 @@ logger = logging.getLogger("fittie")
 
 
 class FitFile:
+
     header: Header
     messages: dict[str, list[DataMessage]]
 
@@ -70,67 +73,76 @@ class FitFile:
 
         return file_id
 
+    @property
+    def available_message_types(self) -> list[str]:
+        """Returns a list of all message types that this FIT file contains"""
+        return list(self.messages.keys())
 
-def decode(data: BinaryIO) -> FitFile:
+    def get_messages_by_type(self, message_type: str) -> list[DataMessage]:
+        """
+        Returns all messages of the provided type, if the FIT file contains these
+        messages. If not, it will return an empty list.
+
+        If the provided message type is unknown, a ValueError will be raised.
+        """
+        if message_type not in MESG_NUMS.values():
+            raise ValueError(f"unknown message type '{message_type}' received")
+
+        return self.messages.get(message_type, [])
+
+
+def decode(source: Union[str, Path, Streamable]) -> FitFile:
     """
     Decode a fit file
     """
-    header = decode_header(data)
+    with DataStream(source) as data:
+        header = decode_header(data)
 
-    logger.debug(header)
+        logger.debug(header)
 
-    local_message_definitions: dict[int, DefinitionMessage] = {}
-    developer_data: dict[int, dict[str, Any]] = {}  # TODO: add typing
-    messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
+        local_message_definitions: dict[int, DefinitionMessage] = {}
+        developer_data: dict[int, dict[str, Any]] = {}  # TODO: add typing
+        messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
 
-    while data.tell() < header.data_size:
-        # Read record header
-        record_header = read_record_header(data)
-        logger.debug(record_header)
+        while data.tell() < header.data_size:
+            # Read record header
+            record_header = read_record_header(data)
 
-        # Read message
-        message = read_record(
-            record_header,
-            local_message_definitions.get(record_header.local_message_type),
-            developer_data,
-            data,
-        )
-        logger.debug(message)
+            # Read message
+            message = read_record(
+                record_header,
+                local_message_definitions.get(record_header.local_message_type),
+                developer_data,
+                data,
+            )
+            logger.debug(message)
 
-        # Assign message to correct collection
-        if record_header.is_compressed_timestamp_message:
-            # TODO:
-            ...
-        elif record_header.is_developer_data or record_header.is_definition_message:
-            # TODO: check if this can be merged with is_definition_message
-            local_message_definitions[record_header.local_message_type] = message
-        else:
-            # TODO: move this to separate function
-            if (
-                global_message_type := local_message_definitions.get(
-                    record_header.local_message_type
-                ).global_message_type
-            ) == 207:
-                # Add developer data index
-                index = message.fields["developer_data_index"]
-                developer_data[index] = message.fields
-                developer_data[index].update({"fields": {}})
-            elif global_message_type == 206:
-                # Add field descriptions
-                index = message.fields["developer_data_index"]
-                field = message.fields
-                # TODO: make class/type for FieldDescription
-                developer_data[index]["fields"][field["field_definition_number"]] = {
-                    "data_index": field["developer_data_index"],
-                    "number": field["field_definition_number"],
-                    "name": field["field_name"],
-                    "base_type": BASE_TYPES[field["fit_base_type_id"]],
-                    "native_message_number": field.get("native_mesg_num"),
-                    "native_field_number": field.get("native_field_num"),
-                    "units": field.get("units"),
-                }
+            # Assign message to correct collection
+            if record_header.is_compressed_timestamp_message:
+                # TODO:
+                ...
+            elif record_header.is_developer_data or record_header.is_definition_message:
+                # TODO: check if this can be merged with is_definition_message
+                local_message_definitions[record_header.local_message_type] = message
+            else:
+                if (
+                    global_message_type := local_message_definitions.get(
+                        record_header.local_message_type
+                    ).global_message_type
+                ) == 207:
+                    # Add developer data index
+                    index = message.fields["developer_data_index"]
+                    developer_data[index] = message.fields
+                    developer_data[index].update({"fields": {}})
+                elif global_message_type == 206:
+                    # Add field descriptions
+                    index = message.fields["developer_data_index"]
+                    field = FieldDescription(**message.fields)
+                    developer_data[index]["fields"][field.field_definition_number] = (
+                        field
+                    )
 
-            messages[MESG_NUMS[global_message_type]].append(message)
+                messages[MESG_NUMS[global_message_type]].append(message)
 
     fitfile = FitFile(header=header, messages=messages)
 
