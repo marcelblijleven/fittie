@@ -7,7 +7,7 @@ from fittie.fitfile.definition_message import decode_definition_message, \
     DefinitionMessage
 from fittie.fitfile.field_definitions import DeveloperFieldDefinition
 from fittie.fitfile.records import RecordHeader
-from fittie.util import Endianness
+from fittie.endianness import Endianness
 
 
 def test_decode_definition_message_example_record_1():
