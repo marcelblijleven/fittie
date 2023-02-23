@@ -1,7 +1,7 @@
 import struct
 
-from typing import BinaryIO
 
+from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
 
 DEFAULT_CRC = 0x0000
@@ -64,7 +64,7 @@ class Header:
         ).replace("self.", " ")
 
 
-def decode_header(data: BinaryIO) -> Header:
+def decode_header(data: Streamable) -> Header:
     """
     Reads a FIT file header from the provided data
     """

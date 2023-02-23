@@ -1,9 +1,11 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from typing import BinaryIO, Any
+from typing import Any
 
+from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
+from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.base_types import BaseType, BASE_TYPES
 
 
@@ -62,7 +64,7 @@ class FieldDefinition:
         return str(self)
 
 
-def decode_developer_field_definition(data: BinaryIO) -> DeveloperFieldDefinition:
+def decode_developer_field_definition(data: Streamable) -> DeveloperFieldDefinition:
     """
     Decode data into a DeveloperFieldDefinition
     """
@@ -81,7 +83,7 @@ def decode_developer_field_definition(data: BinaryIO) -> DeveloperFieldDefinitio
     )
 
 
-def decode_field_definition(data: BinaryIO) -> FieldDefinition:
+def decode_field_definition(data: Streamable) -> FieldDefinition:
     """
     Decode data into a FieldDefinition
 
@@ -116,7 +118,7 @@ def _retrieve_value(
     number_of_values: int,
     base_type: BaseType,
     endianness: str,
-    data: BinaryIO,
+    data: Streamable,
 ) -> Any:
     if number_of_values > 1:
         value = []
@@ -152,7 +154,7 @@ def _retrieve_value(
 def read_field(
     field_definition: FieldDefinition,
     endianness: str,
-    data: BinaryIO,
+    data: Streamable,
 ) -> Any:
     """
     Read field by field definition
@@ -166,17 +168,17 @@ def read_field(
 
 
 def read_developer_field(
-    field_description: dict[str, Any],
+    field_description: FieldDescription,
     field_definition: DeveloperFieldDefinition,
     endianness: str,
-    data: BinaryIO,
+    data: Streamable,
 ) -> Any:
     # TODO: move this to field_definitions
     """
     Read developer data field by field definition and field description
     """
 
-    base_type = field_description["base_type"]
+    base_type = field_description.base_type
     number_of_values = int(field_definition.size / base_type.size)
 
     return _retrieve_value(

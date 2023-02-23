@@ -1,10 +1,12 @@
 from __future__ import annotations  # Added for type hints
 
-from typing import BinaryIO, Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
+from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_definitions import read_field, read_developer_field
+from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.util import get_message_profile
 
 
@@ -50,8 +52,8 @@ class DataMessage:
 def decode_data_message(
     header: "RecordHeader",
     message_definition: DefinitionMessage,
-    developer_data: dict[int, dict[str, Any]],
-    data: BinaryIO,
+    developer_data: dict[int, dict[str, dict[int, FieldDescription]]],
+    data: Streamable,
 ) -> DataMessage:
     message_profile = get_message_profile(message_definition.global_message_type)
 
@@ -86,8 +88,8 @@ def decode_data_message(
             )
 
         developer_field_definition = message_definition.get_developer_field_definition(
-            data_index=field_description["data_index"],
-            number=field_description["number"],
+            data_index=field_description.developer_data_index,
+            number=field_description.field_definition_number,
         )
 
         if not developer_field_definition:
@@ -103,6 +105,6 @@ def decode_data_message(
             data=data,
         )
 
-        fields[field_description["name"]] = field_data
+        fields[field_description.field_name] = field_data
 
     return DataMessage(header=header, fields=fields)
