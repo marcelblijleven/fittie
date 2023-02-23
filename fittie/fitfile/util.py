@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 FIT_EPOCH = 631065600
 
@@ -30,7 +30,8 @@ def rollover_timestamp(previous_timestamp: int, offset: int) -> int:
 
 def datetime_from_timestamp(timestamp: int) -> datetime:
     """
-    Create a datetime from a timestamp using the Garmin FIT epoch.
+    Create a datetime from a timestamp using the Garmin FIT epoch, in UTC.
     """
-    return datetime.utcfromtimestamp(timestamp + FIT_EPOCH)
-
+    dt = datetime.utcfromtimestamp(timestamp + FIT_EPOCH)
+    dt.replace(tzinfo=timezone.utc)
+    return dt
