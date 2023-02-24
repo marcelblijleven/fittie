@@ -1,8 +1,9 @@
 import struct
-
+from io import BytesIO
 
 from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
+from fittie.fitfile.crc import calculate_crc
 
 DEFAULT_CRC = 0x0000
 
@@ -69,14 +70,24 @@ def decode_header(data: Streamable) -> Header:
     Reads a FIT file header from the provided data
     """
     try:
-        (length,) = struct.unpack("B", data.read(1))
-        (protocol_version,) = struct.unpack("B", data.read(1))
-        (profile_version,) = struct.unpack("H", data.read(2))
-        (data_size,) = struct.unpack("I", data.read(4))
-        data_type = b"".join(struct.unpack("4s", data.read(4))).decode("utf-8")
+        # Read first 12 bytes to determine header size
+        header_data = data.read(12)
+        header_reader = BytesIO(header_data)
+
+        (length,) = struct.unpack("B", header_reader.read(1))
+        (protocol_version,) = struct.unpack("B", header_reader.read(1))
+        (profile_version,) = struct.unpack("H", header_reader.read(2))
+        (data_size,) = struct.unpack("I", header_reader.read(4))
+        data_type = b"".join(struct.unpack("4s", header_reader.read(4))).decode("utf-8")
 
         if length == 14:
             (crc,) = struct.unpack("H", data.read(2))
+            calculated_crc = calculate_crc(header_data)
+
+            if crc != calculated_crc:
+                raise DecodeException(
+                    detail="invalid crc checksum in file header", position=0
+                )
         else:
             crc = DEFAULT_CRC
     except struct.error as exc:

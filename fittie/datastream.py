@@ -1,7 +1,8 @@
 import os.path
-
 from pathlib import Path
 from typing import Protocol, Optional, BinaryIO, Any, Union
+
+from fittie.fitfile.crc import apply_crc
 
 
 class Streamable(Protocol):
@@ -24,10 +25,17 @@ class DataStream:
 
     TODO: include CRC check
     """
+
     _data: BinaryIO
     _path: Optional[Union[str, Path]]
+    _calculated_crc: int
+
+    should_calculate_crc: bool
 
     def __init__(self, value: Any):
+        self.should_calculate_crc = True
+        self._calculated_crc = 0
+
         if DataStream.is_file(value):
             self._data = value
         elif DataStream.is_path(value):
@@ -35,16 +43,34 @@ class DataStream:
         elif DataStream.is_streamable(value):
             self._data = value
         else:
-            raise ValueError('unsupported value received as stream input')
+            raise ValueError(
+                f"unsupported value received as stream input: {type(value)}"
+            )
+
+    @property
+    def calculated_crc(self) -> int:
+        """Returns the calculated crc, or 0 if crc calculation is disabled"""
+        return self._calculated_crc
+
+    def reset_crc(self) -> None:
+        """Resets the calculated crc back to 0"""
+        self._calculated_crc = 0
 
     def read(self, size: Optional[int] = 1) -> bytes:
-        return self._data.read(size)
+        if not self.should_calculate_crc:
+            return self._data.read(size)
+
+        value = self._data.read(size)
+
+        for idx in range(0, size):
+            self._calculated_crc = apply_crc(self._calculated_crc, value[idx])
+        return value
 
     def tell(self) -> int:
         return self._data.tell()
 
     def __enter__(self):
-        if not hasattr(self, '_path'):
+        if not hasattr(self, "_path"):
             return self
 
         self._data = open(self._path, "rb")
@@ -88,4 +114,4 @@ class DataStream:
     @staticmethod
     def is_streamable(value: Streamable) -> bool:
         """Check if the provided value has a read and tell method"""
-        return hasattr(value, 'read') and hasattr(value, 'tell')
+        return hasattr(value, "read") and hasattr(value, "tell")
