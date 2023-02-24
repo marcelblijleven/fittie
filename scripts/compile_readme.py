@@ -48,12 +48,17 @@ def replace_section(readme_text: str, section_name: str, section_text: str) -> s
 def add_extra_heading_level(lines: list[str]) -> str:
     """Adds an extra heading level '#' to each line that starts with '#'"""
     new_lines: list[str] = []
+    inside_code_block = False
 
     for line in lines:
-        if line.startswith('#'):
+        if line.startswith("```"):
+            inside_code_block = not inside_code_block
+
+        if line.startswith('#') and not inside_code_block:
             new_lines.append('#' + line)
-        else:
-            new_lines.append(line)
+            continue
+
+        new_lines.append(line)
 
     return ''.join(new_lines)
 

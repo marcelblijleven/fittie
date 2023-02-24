@@ -4,8 +4,12 @@ Parse Garmin .FIT files
 
 [![PyPI version](https://badge.fury.io/py/fittie.svg)](https://badge.fury.io/py/fittie)
 
+## Installation
+
+Fittie is available on pypi and can be installed with the following command.
+
 ```shell
-pip install fittie
+$ pip install fittie
 ```
 
 ## Example
@@ -23,28 +27,61 @@ if __name__ == "__main__":
 <!-- fitfile section -->
 ## Fitfile
 
-(Add more information about the fittie API)
-
 ### Usage
 
-(Add usage examples and information)
+Decoding / parsing a FIT file is done through the `decode` function in the 
+`fittie.fitfile` package. It accepts the following types of arguments:
 
-### Record headers
+- A file path string
+- A file opened in "rb" mode
+- A buffered reader, BinaryIO or BytesIO
 
-...
+```python
+# Examples
+from io import BytesIO
+from fittie.fitfile import decode
 
-### Data messages
+fitfile_1 = decode("/path/to/fit/file.fit")         # Path to file
 
-...
+fitfile_2 = decode(BytesIO(...))                    # BytesIO
 
-### Definition messages
+with open("/path/to/fit/file.fit", "rb") as f:      # File opened in rb mode
+    fitfile_3 = decode(f)
+```
 
-...
+To view the available message types in the fitfile, use the `available_message_types` 
+property. It will return a list of message type keys. These keys can be used to retrieve
+all messages of a certain kind. After retrieving the available message types, 
+the messages can be retrieved using `get_messages_by_type`.
 
-### Field definitions
+```python
+fitfile = decode("/path/to/fit/file.fit")
 
-...
+types = fitfile.available_message_types
+# e.g. [ 'file_id', 'device_info', 'record', 'event', 'lap', 'session', 'activity']
+messages = fitfile.get_messages_by_type('record')  # Returns a list of `DataMessage`
+```
 
+Alternatively, you can interact with the `messages` property of `fitfile` directly, this
+is a simple dict.
+
+#### DataMessages
+
+To access data in a `DataMessage`, use the `fields` property. This will return a dict
+with all the values inside the message.
+
+```python
+fitfile = decode("/path/to/fit/file.fit")
+
+for record in fitfile.get_messages_by_type("record")[:5]:
+    print(record.fields)
+
+# {'timestamp': 1044776016}
+# {'timestamp': 1044776016, 'heart_rate': 117}
+# {'timestamp': 1044776017, 'heart_rate': 116}
+# {'timestamp': 1044776017, 'heart_rate': 115}
+# {'timestamp': 1044776018, 'heart_rate': 115}
+```
 
 #### Debug
 
@@ -55,7 +92,7 @@ To print debug log messages, run your script with `LOGLEVEL=DEBUG` env variable.
 ## Profile
 
 > ⚠️ This is info is mainly needed for development
- 
+
 The profile directory contains field information and parsed data from the Global FIT Profile,
 parsed by the script located at `scripts/parse_profile.py`.
 
