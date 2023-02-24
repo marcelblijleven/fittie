@@ -2,7 +2,7 @@
 
 Parse Garmin .FIT files
 
-[![PyPI version](https://badge.fury.io/py/fittie.svg)](https://badge.fury.io/py/fittie)
+[![PyPI version](https://img.shields.io/pypi/v/fittie?color=green)](https://pypi.org/project/fittie/)
 
 ## Installation
 
