@@ -1,3 +1,10 @@
+## 0.3.0 (2023-02-24)
+
+### Feat
+
+- add crc calculation
+- add crc check for file header
+
 ## 0.2.0 (2023-02-24)
 
 ### Feat
