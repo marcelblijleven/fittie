@@ -3,7 +3,7 @@ from io import BytesIO
 
 from fittie.datastream import Streamable
 from fittie.exceptions import DecodeException
-from fittie.fitfile.crc import calculate_checksum
+from fittie.fitfile.crc import calculate_crc
 
 DEFAULT_CRC = 0x0000
 
@@ -82,7 +82,7 @@ def decode_header(data: Streamable) -> Header:
 
         if length == 14:
             (crc,) = struct.unpack("H", data.read(2))
-            calculated_crc = calculate_checksum(header_data) + 1
+            calculated_crc = calculate_crc(header_data) + 1
 
             if crc != calculated_crc:
                 raise DecodeException(

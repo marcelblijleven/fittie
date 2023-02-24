@@ -18,9 +18,26 @@ TABLE = (
 )
 
 
-def calculate_checksum(data: bytes) -> int:
+def apply_crc(crc: int, value: int) -> int:
     """
-    Calculates checksum for the provided data
+    Applies the crc computation on the provided value and returns it
+    """
+    # Compute checksum of lower four bits of byte
+    tmp = TABLE[crc & 0xF]
+    crc = (crc >> 4) & 0x0FFF
+    crc = crc ^ tmp ^ TABLE[value & 0xF]
+
+    # Compute checksum of upper four bits of byte
+    tmp = TABLE[crc & 0xF]
+    crc = (crc >> 4) & 0x0FFF
+    crc = crc ^ tmp ^ TABLE[(value >> 4) & 0xF]
+
+    return crc
+
+
+def calculate_crc(data: bytes) -> int:
+    """
+    Calculates crc checksum for the entire provided data
 
     Compute method from https://developer.garmin.com/fit/protocol/
     """
@@ -28,14 +45,6 @@ def calculate_checksum(data: bytes) -> int:
     crc = 0
 
     for byte in data:
-        # Compute checksum of lower four bits of byte
-        tmp = TABLE[crc & 0xF]
-        crc = (crc >> 4) & 0x0FFF
-        crc = crc ^ tmp ^ TABLE[byte & 0xF]
-
-        # Compute checksum of upper four bits of byte
-        tmp = TABLE[crc & 0xF]
-        crc = (crc >> 4) & 0x0FFF
-        crc = crc ^ tmp ^ TABLE[(byte >> 4) & 0xF]
+        crc = apply_crc(crc, byte)
 
     return crc
