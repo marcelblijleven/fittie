@@ -38,6 +38,14 @@ messages = fitfile.get_messages_by_type('record')  # Returns a list of `DataMess
 Alternatively, you can interact with the `messages` property of `fitfile` directly, this
 is a simple dict.
 
+### CRC
+
+A crc check is done by default, but can be disabled by providing `calculate_crc=False`
+to the `decode` function to improve speed.
+
+For example, on the same FIT file with 58297 data messages, decoding with crc takes 0.029 seconds and without
+crc it only takes 0.014 seconds.
+
 ### DataMessages
 
 To access data in a `DataMessage`, use the `fields` property. This will return a dict
