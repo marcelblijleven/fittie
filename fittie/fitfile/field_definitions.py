@@ -162,9 +162,7 @@ def read_field(
     base_type = field_definition.base_type
     number_of_values = int(field_definition.size / base_type.size)
 
-    return _retrieve_value(
-        number_of_values, base_type, endianness, data
-    )
+    return _retrieve_value(number_of_values, base_type, endianness, data)
 
 
 def read_developer_field(
@@ -181,6 +179,4 @@ def read_developer_field(
     base_type = field_description.base_type
     number_of_values = int(field_definition.size / base_type.size)
 
-    return _retrieve_value(
-        number_of_values, base_type, endianness, data
-    )
+    return _retrieve_value(number_of_values, base_type, endianness, data)
