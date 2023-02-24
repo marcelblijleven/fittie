@@ -165,8 +165,6 @@ repository and places the content of those files inside the main `README.md`.
 <!-- end scripts section -->
 
 ## TODO:
- - add data/stream class
- - crc check
  - handle components, accumulators etc
  - handle chained FIT
  - compressed timestamps
