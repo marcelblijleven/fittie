@@ -80,6 +80,9 @@ class DefinitionMessage:
             f"{self.field_definitions=}{self.developer_field_definitions=}"
         ).replace("self.", " ")
 
+    def __repr__(self) -> str:
+        return str(self)
+
 
 def decode_definition_message(
     header: "RecordHeader", data: Streamable
