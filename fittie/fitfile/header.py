@@ -82,12 +82,11 @@ def decode_header(data: Streamable) -> Header:
 
         if length == 14:
             (crc,) = struct.unpack("H", data.read(2))
-            calculated_crc = calculate_crc(header_data) + 1
+            calculated_crc = calculate_crc(header_data)
 
             if crc != calculated_crc:
                 raise DecodeException(
-                    detail="invalid crc checksum in file header",
-                    position=0
+                    detail="invalid crc checksum in file header", position=0
                 )
         else:
             crc = DEFAULT_CRC
