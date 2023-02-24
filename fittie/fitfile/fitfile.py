@@ -11,7 +11,7 @@ from fittie.datastream import DataStream, Streamable
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_description import FieldDescription
-from fittie.fitfile.header import Header, decode_header
+from fittie.fitfile.header import Header, decode_header, DEFAULT_CRC
 from fittie.fitfile.profile.fit_types import FIT_TYPES
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.records import read_record_header, read_record
@@ -26,10 +26,25 @@ class FitFile:
 
     header: Header
     messages: dict[str, list[DataMessage]]
+    local_message_definitions: dict[int, DefinitionMessage] = {}
+    developer_data: dict[int, dict[str, Any]] = {}  # TODO: add typing
 
-    def __init__(self, header: Header, messages: dict[str, list[DataMessage]]):
+    def __init__(
+            self,
+            header: Header,
+            messages: dict[str, list[DataMessage]],
+            local_message_definitions: dict[int, DefinitionMessage],
+            developer_data: dict[int, dict[str, Any]],
+    ):
         self.header = header
         self.messages = messages
+        self.local_message_definitions = local_message_definitions
+        self.developer_data = developer_data
+
+        # NOTE: not sure if I want to keep this, maybe in combination with a
+        # .pyi stub?
+        # for key in self.messages.keys():
+        #     setattr(self, f"get_{key}_messages", lambda: self.messages[key])
 
     @property
     def average_heart_rate(self) -> Optional[int]:
@@ -91,17 +106,24 @@ class FitFile:
         return self.messages.get(message_type, [])
 
 
-def decode(source: Union[str, Path, Streamable]) -> FitFile:
+def decode(
+    source: Union[str, Path, Streamable],
+    calculate_crc: Optional[bool] = True
+) -> FitFile:
     """
     Decode a fit file
     """
     with DataStream(source) as data:
         header = decode_header(data)
 
+        if not calculate_crc or header.crc == DEFAULT_CRC:
+            # Don't calculate checksum
+            data.should_calculate_crc = False
+
         logger.debug(header)
 
         local_message_definitions: dict[int, DefinitionMessage] = {}
-        developer_data: dict[int, dict[str, Any]] = {}  # TODO: add typing
+        developer_data: dict[int, dict[str, Any]] = {}
         messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
 
         while data.tell() < header.data_size:
@@ -144,6 +166,11 @@ def decode(source: Union[str, Path, Streamable]) -> FitFile:
 
                 messages[MESG_NUMS[global_message_type]].append(message)
 
-    fitfile = FitFile(header=header, messages=messages)
+    fitfile = FitFile(
+        header=header,
+        messages=messages,
+        local_message_definitions=local_message_definitions,
+        developer_data=developer_data,
+    )
 
     return fitfile
