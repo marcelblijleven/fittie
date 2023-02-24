@@ -62,3 +62,9 @@ omit = [
     "fittie/fitfile/profile/mesg_nums.py",
     "fittie/fitfile/profile/messages.py"
 ]
+
+[tool.commitizen]
+version = "0.2.0"
+version_files = [
+    "pyproject.toml"
+]
