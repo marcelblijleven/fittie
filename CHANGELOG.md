@@ -1,3 +1,9 @@
+## 0.3.1 (2023-02-25)
+
+### Fix
+
+- don't use subscripted generic for isinstance check
+
 ## 0.3.0 (2023-02-24)
 
 ### Feat
