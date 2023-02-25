@@ -103,7 +103,7 @@ class DataStream:
 
         Raises FileNotFoundError if path doesn't exist.
         """
-        if not isinstance(value, str) or not isinstance(value, Path):
+        if not isinstance(value, str) and not isinstance(value, Path):
             return False
 
         if not os.path.exists(value):
