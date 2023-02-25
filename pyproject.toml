@@ -68,3 +68,9 @@ version = "0.3.0"
 version_files = [
     "pyproject.toml"
 ]
+update_changelog_on_bump = true
+annotated_tag = true
+major_version_zero = true  # Disable this when ready to go to 1.0.0
+pre_bump_hooks = [
+  "scripts/compile_readme.py"
+]
