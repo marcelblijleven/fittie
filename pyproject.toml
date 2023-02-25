@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fittie"
-version = "0.3.1"
+version = "0.3.2"
 description = "FIT file tool"
 authors = [
     { name = "Marcel Blijleven" }
@@ -64,13 +64,13 @@ omit = [
 ]
 
 [tool.commitizen]
-version = "0.3.1"
+version = "0.3.2"
 version_files = [
     "pyproject.toml"
 ]
 update_changelog_on_bump = true
 annotated_tag = true
 major_version_zero = true  # Disable this when ready to go to 1.0.0
-pre_bump_hooks = [
-  "scripts/compile_readme.py"
-]
+#pre_bump_hooks = [
+#  "scripts/compile_readme.py" Doesn't work with python script
+#]
