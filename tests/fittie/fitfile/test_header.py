@@ -38,4 +38,3 @@ def test_header_encode(header_bytes) -> None:
     )
 
     assert header.encode() == header_bytes
-

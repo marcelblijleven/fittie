@@ -3,7 +3,7 @@ from __future__ import annotations
 import struct
 from typing import Optional
 
-from fittie.datastream import Streamable
+from fittie.utils.datastream import Streamable
 
 
 class BaseType:

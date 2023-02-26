@@ -3,8 +3,8 @@ from __future__ import annotations  # Added for type hints
 import struct
 from typing import Any
 
-from fittie.datastream import Streamable
-from fittie.exceptions import DecodeException
+from fittie.utils.datastream import Streamable
+from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.base_types import BaseType, BASE_TYPES
 

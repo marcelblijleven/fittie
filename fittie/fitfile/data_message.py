@@ -2,8 +2,8 @@ from __future__ import annotations  # Added for type hints
 
 from typing import Any, Optional, TYPE_CHECKING
 
-from fittie.datastream import Streamable
-from fittie.exceptions import DecodeException
+from fittie.utils.datastream import Streamable
+from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_definitions import read_field, read_developer_field
 from fittie.fitfile.field_description import FieldDescription

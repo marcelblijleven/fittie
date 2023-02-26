@@ -3,15 +3,15 @@ from __future__ import annotations  # Added for type hints
 import struct
 from typing import TYPE_CHECKING, Optional
 
-from fittie.datastream import Streamable
-from fittie.exceptions import DecodeException
+from fittie.utils.datastream import Streamable
+from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.field_definitions import (
     FieldDefinition,
     DeveloperFieldDefinition,
     decode_field_definition,
     decode_developer_field_definition,
 )
-from fittie.endianness import Endianness
+from fittie.utils.endianness import Endianness
 
 if TYPE_CHECKING:
     from fittie.fitfile.records import RecordHeader
