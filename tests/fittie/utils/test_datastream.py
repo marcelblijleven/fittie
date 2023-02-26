@@ -45,9 +45,8 @@ def test_datastream_invalid_value():
     with pytest.raises(ValueError) as exc_info:
         DataStream(bytes([1, 2, 3]))
 
-    assert (
-        "unsupported value received as stream input: <class 'bytes'>"
-        in str(exc_info.value)
+    assert "unsupported value received as stream input: <class 'bytes'>" in str(
+        exc_info.value
     )
 
 
@@ -76,4 +75,3 @@ def test_datastream_crc__crc_disabled():
 
     assert datastream.calculated_crc == 0
     patched_apply_crc.assert_not_called()
-
