@@ -15,13 +15,17 @@ $ pip install fittie
 ## Example
 
 ```python
-from fittie.fitfile import decode
+from fittie import decode
 
 if __name__ == "__main__":
     fitfile = decode("path/to/fit/file.fit")
         
     # Example: get average heart rate
     print(fitfile.average_heart_rate)
+
+    # Loop through all data messages:
+    for data_message in fitfile:
+        print(data_message)
 ```
 
 <!-- fitfile section -->
