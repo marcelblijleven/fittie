@@ -1,15 +1,17 @@
 from __future__ import annotations  # Added for type hints
 
+import functools
+import itertools
 import logging
 import os
 import struct
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Optional, Union
+from typing import Any, DefaultDict, Optional, Union, Iterable
 
-from fittie.datastream import DataStream, Streamable
-from fittie.exceptions import DecodeException
+from fittie.utils.datastream import DataStream, Streamable
+from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_description import FieldDescription
@@ -18,37 +20,42 @@ from fittie.fitfile.profile.fit_types import FIT_TYPES
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.records import read_record_header, read_record
 from fittie.fitfile.util import datetime_from_timestamp
+from fittie.utils.iterable import IterableMixin
 
 LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger("fittie")
 
 
-class FitFile:
+class FitFile(IterableMixin):
 
     header: Header
-    messages: dict[str, list[DataMessage]]
+    data_messages: dict[str, list[DataMessage]]
     local_message_definitions: dict[int, DefinitionMessage] = {}
     developer_data: dict[int, dict[str, Any]] = {}  # TODO: add typing
 
     def __init__(
         self,
         header: Header,
-        messages: dict[str, list[DataMessage]],
+        data_messages: dict[str, list[DataMessage]],
         local_message_definitions: dict[int, DefinitionMessage],
         developer_data: dict[int, dict[str, Any]],
     ):
         self.header = header
-        self.messages = messages
+        self.data_messages = data_messages
         self.local_message_definitions = local_message_definitions
         self.developer_data = developer_data
+
+    @functools.cached_property
+    def _iter_collection(self) -> Iterable:
+        return list(itertools.chain(*self.data_messages.values()))
 
     @property
     def average_heart_rate(self) -> Optional[int]:
         """Get average heart rate from data messages, if any"""
         heart_rates: list[int] = []
 
-        if not (records := self.messages.get("record")):
+        if not (records := self.data_messages.get("record")):
             return None
 
         for message in records:
@@ -67,7 +74,7 @@ class FitFile:
         Raw values from the FIT file will be filled with information from the Garmin
         FIT SDK Fit Types
         """
-        if not (file_id_messages := self.messages.get("file_id")):
+        if not (file_id_messages := self.data_messages.get("file_id")):
             raise ValueError(
                 "no file_id message detected, FIT file is possible incorrect"
             )
@@ -98,7 +105,7 @@ class FitFile:
     @property
     def available_message_types(self) -> list[str]:
         """Returns a list of all message types that this FIT file contains"""
-        return list(self.messages.keys())
+        return list(self.data_messages.keys())
 
     def get_messages_by_type(self, message_type: str) -> list[DataMessage]:
         """
@@ -110,7 +117,7 @@ class FitFile:
         if message_type not in MESG_NUMS.values():
             raise ValueError(f"unknown message type '{message_type}' received")
 
-        return self.messages.get(message_type, [])
+        return self.data_messages.get(message_type, [])
 
 
 def decode(
@@ -185,7 +192,7 @@ def decode(
 
     fitfile = FitFile(
         header=header,
-        messages=messages,
+        data_messages=messages,
         local_message_definitions=local_message_definitions,
         developer_data=developer_data,
     )

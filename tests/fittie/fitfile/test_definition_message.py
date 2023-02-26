@@ -2,12 +2,14 @@ import pytest
 
 from io import BytesIO
 
-from fittie.exceptions import DecodeException
-from fittie.fitfile.definition_message import decode_definition_message, \
-    DefinitionMessage
+from fittie.utils.exceptions import DecodeException
+from fittie.fitfile.definition_message import (
+    decode_definition_message,
+    DefinitionMessage,
+)
 from fittie.fitfile.field_definitions import DeveloperFieldDefinition
 from fittie.fitfile.records import RecordHeader
-from fittie.endianness import Endianness
+from fittie.utils.endianness import Endianness
 
 
 def test_decode_definition_message_example_record_1():
@@ -16,7 +18,7 @@ def test_decode_definition_message_example_record_1():
         is_definition_message=True,
         is_compressed_timestamp_message=False,
         is_developer_data=False,
-        local_message_type=0
+        local_message_type=0,
     )
 
     reserved = (0).to_bytes(length=1, byteorder="little")
@@ -56,7 +58,7 @@ def test_decode_definition_message_invalid_record_header():
         is_definition_message=False,  # set to False
         is_compressed_timestamp_message=False,
         is_developer_data=False,
-        local_message_type=0
+        local_message_type=0,
     )
 
     data = BytesIO()
@@ -75,28 +77,21 @@ def test_decode_definition_message_invalid_reserved_bit():
         is_definition_message=True,
         is_compressed_timestamp_message=False,
         is_developer_data=False,
-        local_message_type=0
+        local_message_type=0,
     )
 
-    data = BytesIO(
-        bytearray([1])
-    )
+    data = BytesIO(bytearray([1]))
 
     with pytest.raises(DecodeException) as excinfo:
         decode_definition_message(header, data)
 
-    assert (
-        "received invalid data for a definition message"
-        in str(excinfo.value)
-    )
+    assert "received invalid data for a definition message" in str(excinfo.value)
 
 
 def test_get_developer_field_definition():
     developer_field_definition = DeveloperFieldDefinition(
-            data_index=1,
-            number=2,
-            size=1
-        )
+        data_index=1, number=2, size=1
+    )
     definition_message = DefinitionMessage(
         header=RecordHeader(
             is_definition_message=True,
@@ -107,15 +102,15 @@ def test_get_developer_field_definition():
         endianness=Endianness.LITTLE,
         global_message_type=0,
         field_definitions=[],
-        developer_field_definitions=[
-            developer_field_definition
-        ]
+        developer_field_definitions=[developer_field_definition],
     )
 
-    assert definition_message.get_developer_field_definition(
-        data_index=1, number=2
-    ) == developer_field_definition
+    assert (
+        definition_message.get_developer_field_definition(data_index=1, number=2)
+        == developer_field_definition
+    )
 
-    assert definition_message.get_developer_field_definition(
-        data_index=1, number=1
-    ) is None
+    assert (
+        definition_message.get_developer_field_definition(data_index=1, number=1)
+        is None
+    )

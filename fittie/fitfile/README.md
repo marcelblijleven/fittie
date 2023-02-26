@@ -12,7 +12,7 @@ Decoding / parsing a FIT file is done through the `decode` function in the
 ```python
 # Examples
 from io import BytesIO
-from fittie.fitfile import decode
+from fittie import decode
 
 fitfile_1 = decode("/path/to/fit/file.fit")         # Path to file
 
@@ -35,8 +35,8 @@ types = fitfile.available_message_types
 messages = fitfile.get_messages_by_type('record')  # Returns a list of `DataMessage`
 ```
 
-Alternatively, you can interact with the `messages` property of `fitfile` directly, this
-is a simple dict.
+Alternatively, you can interact with the `data_messages` property of `fitfile` directly,
+this is a simple dict.
 
 ### File types
 
@@ -75,7 +75,3 @@ for record in fitfile.get_messages_by_type("record")[:5]:
 # {'timestamp': 1044776017, 'heart_rate': 115}
 # {'timestamp': 1044776018, 'heart_rate': 115}
 ```
-
-### Debug
-
-To print debug log messages, run your script with `LOGLEVEL=DEBUG` env variable.

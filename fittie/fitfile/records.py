@@ -3,8 +3,8 @@ from __future__ import annotations  # Added for type hints
 import struct
 from typing import Optional, Any
 
-from fittie.datastream import Streamable
-from fittie.exceptions import DecodeException
+from fittie.utils.datastream import Streamable
+from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.data_message import decode_data_message
 from fittie.fitfile.definition_message import (
     DefinitionMessage,

@@ -1,8 +1,8 @@
 import struct
 from io import BytesIO
 
-from fittie.datastream import Streamable
-from fittie.exceptions import DecodeException
+from fittie.utils.datastream import Streamable
+from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.crc import calculate_crc
 
 DEFAULT_CRC = 0x0000
