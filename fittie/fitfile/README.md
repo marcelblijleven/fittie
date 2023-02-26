@@ -38,6 +38,18 @@ messages = fitfile.get_messages_by_type('record')  # Returns a list of `DataMess
 Alternatively, you can interact with the `messages` property of `fitfile` directly, this
 is a simple dict.
 
+### File types
+
+All FIT files should contain a file id message that describes the type of file. Common 
+file types are `activity`, `workout` and `course`. More file types can be found in 
+`fit_types.py`.
+
+To retrieve the type of the decoded `fitfile`, use the `.file_type` property.
+
+```pycon
+assert fitfile.file_type == "activity"
+```
+
 ### CRC
 
 A crc check is done by default, but can be disabled by providing `calculate_crc=False`
