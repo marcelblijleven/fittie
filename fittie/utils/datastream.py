@@ -57,6 +57,12 @@ class DataStream:
         self._calculated_crc = 0
 
     def read(self, size: Optional[int] = 1) -> bytes:
+        """
+        Reads the provided number of bits from the wrapped BinaryIO data
+
+        If a crc should be calculated, the internal crc property will be calculated
+        for each byte that was read.
+        """
         if not self.should_calculate_crc:
             return self._data.read(size)
 
@@ -67,6 +73,7 @@ class DataStream:
         return value
 
     def tell(self) -> int:
+        """Returns the current stream position"""
         return self._data.tell()
 
     def __enter__(self):
