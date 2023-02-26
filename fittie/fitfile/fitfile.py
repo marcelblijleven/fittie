@@ -43,11 +43,6 @@ class FitFile:
         self.local_message_definitions = local_message_definitions
         self.developer_data = developer_data
 
-        # NOTE: not sure if I want to keep this, maybe in combination with a
-        # .pyi stub?
-        # for key in self.messages.keys():
-        #     setattr(self, f"get_{key}_messages", lambda: self.messages[key])
-
     @property
     def average_heart_rate(self) -> Optional[int]:
         """Get average heart rate from data messages, if any"""
@@ -72,13 +67,15 @@ class FitFile:
         Raw values from the FIT file will be filled with information from the Garmin
         FIT SDK Fit Types
         """
-        if not (file_ids := self.messages.get("file_id")):
-            return None
+        if not (file_id_messages := self.messages.get("file_id")):
+            raise ValueError(
+                "no file_id message detected, FIT file is possible incorrect"
+            )
 
         file_id = {}
 
         # Should be just one file_id, but to be sure use latest from list
-        for key, value in file_ids[-1].fields.items():
+        for key, value in file_id_messages[-1].fields.items():
             if key == "time_created":
                 file_id[key] = datetime_from_timestamp(value)
             elif key == "type":
@@ -89,6 +86,14 @@ class FitFile:
                 file_id[key] = value
 
         return file_id
+
+    @property
+    def file_type(self) -> str:
+        """
+        Returns the file type of the FIT File. The file type is retrieved from the
+        file_id message, which is always present in a FIT file.
+        """
+        return self.file_id["type"]
 
     @property
     def available_message_types(self) -> list[str]:
