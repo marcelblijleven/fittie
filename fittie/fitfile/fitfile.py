@@ -6,6 +6,7 @@ import logging
 import os
 import struct
 
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, DefaultDict, Optional, Union, Iterable
@@ -20,14 +21,58 @@ from fittie.fitfile.profile.fit_types import FIT_TYPES
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.records import read_record_header, read_record
 from fittie.fitfile.util import datetime_from_timestamp
-from fittie.utils.iterable import IterableMixin
 
 LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger("fittie")
 
 
-class FitFile(IterableMixin):
+class _IterableMixin(ABC):
+    @property
+    @abstractmethod
+    def _iter_collection(self):
+        """
+        Defines which collection of data the __next__ method should use.
+
+        Make sure to decorate this with @cached_property if it is an expensive
+        calculation.
+
+        Also make sure to add __dict__ to  __slots__ if slots are used and the
+        property is cached, because  __dict__ has to be mutable.
+        """
+        ...
+
+    def __next__(self) -> dict:
+        if self._iter_index >= len(self._iter_collection):
+            # Remove _iter_collection value from cache, if it exists.
+            # If _iter_collection is cached, then it should exist and be cleared
+            # as soon as the collection has been fully iterated.
+            if "_iter_collection" in self.__dict__:
+                del self.__dict__["_iter_collection"]
+
+            # Remove _iter_file from dict, because it is only used in iterations
+            if "_iter_filter" in self.__dict__:
+                del self.__dict__["_iter_filter"]
+
+            raise StopIteration
+
+        value = self._iter_collection[self._iter_index]
+        self._iter_index += 1
+
+        if (
+            hasattr(self, "_iter_filter")
+            and (fields := self._iter_filter["fields"])
+        ):
+            return {field: value.fields[field] for field in fields}
+
+        return value.fields
+
+    def __iter__(self):
+        self._iter_index = 0
+        return self
+
+
+class FitFile(_IterableMixin):
 
     header: Header
     data_messages: dict[str, list[DataMessage]]
@@ -47,24 +92,25 @@ class FitFile(IterableMixin):
         self.developer_data = developer_data
 
     @functools.cached_property
-    def _iter_collection(self) -> Iterable:
+    def _iter_collection(self) -> Iterable[DataMessage]:
+        if hasattr(self, "_iter_filter"):
+            # Entered through __call__, filter messages
+            message_type = self._iter_filter["message_type"]
+            return self.data_messages.get(message_type, [])
+
         return list(itertools.chain(*self.data_messages.values()))
 
-    @property
-    def average_heart_rate(self) -> Optional[int]:
-        """Get average heart rate from data messages, if any"""
-        heart_rates: list[int] = []
+    def __call__(self, *, message_type: str, fields: Optional[list[str]] = None):
+        """
+        Makes the instance callable and adds filter options for a specific message
+        type and keywords of field values to return while iterating
+        """
+        self._iter_filter = {
+            "fields": fields or [],
+            "message_type": message_type,
+        }
 
-        if not (records := self.data_messages.get("record")):
-            return None
-
-        for message in records:
-            if (heart_rate := message.fields.get("heart_rate")) is not None:
-                heart_rates.append(heart_rate)
-        if not heart_rates:
-            return None
-
-        return int(sum(heart_rates) / len(heart_rates))
+        return self
 
     @property
     def file_id(self) -> Optional[dict[str, Any]]:
