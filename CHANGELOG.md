@@ -1,3 +1,9 @@
+## v0.5.0 (2023-02-27)
+
+### Feat
+
+- add filtering to iterating over fitfile
+
 ## v0.4.0 (2023-02-26)
 
 ### Feat
