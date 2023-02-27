@@ -44,6 +44,8 @@ repository = "https://github.com/marcelblijleven/fittie"
 
 [tool.setuptools.packages.find]
 exclude = [
+    ".github",
+    "examples",
     "scripts",
     "tests"
 ]

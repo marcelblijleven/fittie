@@ -15,8 +15,7 @@ def main(filename: str):
 
     # Get only certain field data from all "record" messages
     for data in fitfile(
-        message_type="record",
-        fields=["timestamp", "heart_rate", "power", "distance"]
+        message_type="record", fields=["timestamp", "heart_rate", "power", "distance"]
     ):
         print(data)
 

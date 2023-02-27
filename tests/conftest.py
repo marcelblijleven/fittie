@@ -1,5 +1,3 @@
-import struct
-
 import pytest
 
 from fittie.fitfile.data_message import DataMessage

@@ -1,6 +1,4 @@
 from .fitfile import decode
 
 
-__all__ = [
-    "decode"
-]
+__all__ = ["decode"]

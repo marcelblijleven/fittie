@@ -59,10 +59,7 @@ class _IterableMixin(ABC):
         value = self._iter_collection[self._iter_index]
         self._iter_index += 1
 
-        if (
-            hasattr(self, "_iter_filter")
-            and (fields := self._iter_filter["fields"])
-        ):
+        if hasattr(self, "_iter_filter") and (fields := self._iter_filter["fields"]):
             return {field: value.fields[field] for field in fields}
 
         return value.fields
