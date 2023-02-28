@@ -107,9 +107,6 @@ for record in fitfile.get_messages_by_type("record")[:5]:
 # {'timestamp': 1044776018, 'heart_rate': 115}
 ```
 
-#### Debug
-
-To print debug log messages, run your script with `LOGLEVEL=DEBUG` env variable.
 <!-- end fitfile section -->
 
 ## TODO:

@@ -2,8 +2,6 @@ from __future__ import annotations  # Added for type hints
 
 import functools
 import itertools
-import logging
-import os
 import struct
 
 from abc import ABC, abstractmethod
@@ -22,10 +20,6 @@ from fittie.fitfile.profile.fit_types import FIT_TYPES
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.records import read_record_header, read_record
 from fittie.fitfile.util import datetime_from_timestamp
-
-LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
-logging.basicConfig(level=LOGLEVEL)
-logger = logging.getLogger("fittie")
 
 
 class _IterableMixin(ABC):
@@ -191,8 +185,6 @@ def decode(
 
         header = decode_header(data)
 
-        logger.debug(header)
-
         local_message_definitions: dict[int, DefinitionMessage] = {}
         developer_data: dict[int, dict[str, Any]] = {}
         messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
@@ -208,7 +200,6 @@ def decode(
                 developer_data,
                 data,
             )
-            logger.debug(message)
 
             # Assign message to correct collection
             if record_header.is_compressed_timestamp_message:
