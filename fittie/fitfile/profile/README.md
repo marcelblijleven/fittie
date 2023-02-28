@@ -11,7 +11,7 @@ parsed by the script located at `scripts/parse_profile.py`.
 
 Contains all FIT base types and their relevant information, such as data type, struct
 format and size. The BaseType class has a helper method to retrieve a value from the 
-provided BinaryIO.
+provided BinaryIO/Streamable.
 
 ### Fit types
 
