@@ -1,7 +1,5 @@
 # Profile
 
-> ⚠️ This is info is mainly needed for development
-
 The profile directory contains field information and parsed data from the Global FIT Profile,
 parsed by the script located at `scripts/parse_profile.py`.
 

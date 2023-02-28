@@ -1,3 +1,8 @@
+# Filtered fields
+
+Pass a fields filter into the fitfile variable to get specific fields.
+
+```python
 from fittie import decode
 
 
@@ -15,10 +20,16 @@ def main(filename: str):
 
     # Get only certain field data from all "record" messages
     for data in fitfile(
-        message_type="record", fields=["timestamp", "heart_rate", "power", "distance"]
+        message_type="record", fields=[
+            "timestamp", 
+            "heart_rate", 
+            "power", 
+            "distance"
+        ]
     ):
         print(data)
 
 
 if __name__ == "__main__":
     main("/path/to/fit/file.fit")
+```
