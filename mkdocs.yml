@@ -1,0 +1,63 @@
+site_name: Fittie
+nav:
+  - Home:
+    - index.md
+  - Getting started:
+    - Decoding: decoding.md
+    - Iterating over data: iterating_data.md
+    - Examples:
+        - Filtered fields: examples/filtered_fields.md
+        - Normalized power: examples/normalized_power.md
+        - Intensity (power): examples/intensity.md
+        - Highest average power: examples/highest_average_power.md
+  - Development:
+    - Profile: development/profile.md
+    - Scripts: development/scripts.md
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+
+repo_name: marcelblijleven/fittie
+repo_url: https://github.com/marcelblijleven/fittie
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/.icons
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  icon:
+    logo: logo/fittie icon
+  features:
+    # Content
+    - content.code.annotate
+    - content.code.copy
+    # Navigation
+    - navigation.footer
+    - navigation.tabs
+    - navigation.tracking
+    - navigation.top
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+#      toggle:
+#        icon: material/brightness-7
+#        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+#      toggle:
+#        icon: material/brightness-4
+#        name: Switch to light mode
