@@ -11,6 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, DefaultDict, Optional, Union, Iterable
 
+from fittie.fitfile.profile.messages import MESSAGES
 from fittie.utils.datastream import DataStream, Streamable
 from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.data_message import DataMessage
@@ -60,7 +61,7 @@ class _IterableMixin(ABC):
         self._iter_index += 1
 
         if hasattr(self, "_iter_filter") and (fields := self._iter_filter["fields"]):
-            return {field: value.fields[field] for field in fields}
+            return {field: value.fields.get(field) for field in fields}
 
         return value.fields
 
@@ -149,6 +150,20 @@ class FitFile(_IterableMixin):
     def available_message_types(self) -> list[str]:
         """Returns a list of all message types that this FIT file contains"""
         return list(self.data_messages.keys())
+
+    @functools.cached_property
+    def available_fields(self) -> dict[str, str]:
+        """Returns a list of all field names as key, with units as value"""
+        fields = {}
+
+        for definition_message in self.local_message_definitions.values():
+            _fields = MESSAGES[definition_message.global_message_type]["fields"]
+
+            for field_definition in definition_message.field_definitions:
+                field = _fields[field_definition.number]
+                fields[field["field_name"]] = field["units"]
+
+        return fields
 
     def get_messages_by_type(self, message_type: str) -> list[DataMessage]:
         """
