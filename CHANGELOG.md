@@ -1,4 +1,8 @@
-## Unreleased
+## v0.6.0 (2023-03-01)
+
+### Features ✨
+
+- add available fields property
 
 ## v0.5.0 (2023-02-27)
 
