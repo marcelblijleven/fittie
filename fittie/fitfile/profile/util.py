@@ -1,8 +1,11 @@
-import copy
-
+from dataclasses import fields
 from functools import lru_cache
 
-from fittie.fitfile.profile.message_profile import MessageProfile
+from fittie.fitfile.profile.message_profile import (
+    MessageProfile,
+    FieldProfile,
+    SubField,
+)
 from fittie.fitfile.profile.messages import MESSAGES
 
 
@@ -19,10 +22,46 @@ def get_message_profile(number: int) -> MessageProfile:
     if number not in MESSAGES:
         raise ValueError(f'unknown message number "{number}"')
 
-    raw = copy.deepcopy(MESSAGES[number])
+    return dict_to_message_profile(MESSAGES[number])
 
-    raw["fields"]: dict[int, MessageProfile.FieldProfile] = {
-        k: MessageProfile.FieldProfile(**v) for k, v in raw["fields"].items()
-    }
+
+def dict_to_message_profile(source: dict) -> MessageProfile:
+    """
+    Converts a nested dict to a MessageProfile, with FieldProfiles
+    """
+    raw = {}
+    field_types = {f.name: f.type for f in fields(MessageProfile)}
+
+    for key, value in source.items():
+        if field_types[key] != "dict[int, FieldProfile]":
+            raw[key] = value
+            continue
+
+        raw_fields = {}
+        for field_key, field_value in value.items():
+            raw_fields[field_key] = dict_to_field_profile(field_value)
+
+        raw[key] = raw_fields
 
     return MessageProfile(**raw)
+
+
+def dict_to_field_profile(source: dict) -> FieldProfile:
+    """
+    Converts a nested dict to a FieldProfile, with SubFields
+    """
+    raw = {}
+    field_types = {f.name: f.type for f in fields(FieldProfile)}
+
+    for key, value in source.items():
+        if field_types[key] != "Optional[list[SubField]]":
+            raw[key] = value
+            continue
+
+        raw_subfields = []
+        for subfield in value:
+            raw_subfields.append(SubField(**subfield))
+
+        raw[key] = raw_subfields
+
+    return FieldProfile(**raw)
