@@ -21,7 +21,7 @@ def find_readme_files() -> dict[str, Path]:
     for file in readme_files:
         abspath = Path(os.path.abspath(file.absolute()))
 
-        if abspath.parent.name in ['.pytest_cache', 'data']:
+        if abspath.parent.name in [".pytest_cache", "data"]:
             # Ignore these files
             continue
 
@@ -56,13 +56,13 @@ def add_extra_heading_level(lines: list[str]) -> str:
         if line.startswith("```"):
             inside_code_block = not inside_code_block
 
-        if line.startswith('#') and not inside_code_block:
-            new_lines.append('#' + line)
+        if line.startswith("#") and not inside_code_block:
+            new_lines.append("#" + line)
             continue
 
         new_lines.append(line)
 
-    return ''.join(new_lines)
+    return "".join(new_lines)
 
 
 def read_file_text(path: Path) -> str:
@@ -95,11 +95,11 @@ def compile_readme() -> None:
     """Combines all readme files into one"""
     readme_files = find_readme_files()
 
-    main_readme = readme_files['fittie']
+    main_readme = readme_files["fittie"]
     main_readme_text = read_file_text(main_readme)
 
     for section_name, path in readme_files.items():
-        if section_name == 'fittie':
+        if section_name == "fittie":
             continue
 
         section_text = read_section(path)
