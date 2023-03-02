@@ -1,3 +1,16 @@
+## v0.7.0 (2023-03-02)
+
+### Features ✨
+
+- apply scale and offset
+- implement subfields
+- add subfields to profile
+- update fit profile to version 21.105
+
+### refactor
+
+- move decode to own file, field profile and subfield out of message profile
+
 ## v0.6.0 (2023-03-01)
 
 ### Features ✨
