@@ -87,6 +87,37 @@ def add_subfields_to_fields(
     return subfield_names
 
 
+def apply_scale_and_offset(
+    field_data: Any, scale: Optional[int], offset: Optional[int]
+) -> Any:
+    """
+    Applies scale and offset to the provided value
+
+    Value is divided by scale, default scale is 1
+    Value is subtracted by ofset, default offset is 0
+
+    Value can be a single value, or list of value
+    Scale can be a single value, or list of value
+    Offset is single value
+    """
+    if field_data is None:
+        return field_data
+
+    scale = scale or 1
+    offset = offset or 0
+
+    if not isinstance(field_data, list):
+        return field_data / scale - offset
+
+    if isinstance(scale, list):
+        if len(scale) != len(field_data):
+            return field_data
+
+        return [apply_scale_and_offset(d, s, offset) for d, s in zip(field_data, scale)]
+
+    return [apply_scale_and_offset(data, scale, offset) for data in field_data]
+
+
 def decode_data_message(
     header: "RecordHeader",
     message_definition: DefinitionMessage,
@@ -107,8 +138,17 @@ def decode_data_message(
             endianness=message_definition.endianness,
             data=data,
         )
-        fields[field_profile.field_name] = field_data
 
+        if field_profile and (
+            field_profile.scale is not None or field_profile.offset is not None
+        ):
+            field_data = apply_scale_and_offset(
+                field_data, scale=field_profile.scale, offset=field_profile.offset
+            )
+
+        fields[field_profile.field_name] = field_data
+        if field_profile.field_name == "speed":
+            print(field_data)
         if field_profile.has_subfields:
             fields_with_subfields[field_profile.field_name] = field_profile
         if field_profile.has_components:
