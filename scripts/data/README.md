@@ -1,6 +1,7 @@
 # Scripts data
 
-Place Messages.csv and Types.csv from the Garmin profile in this directory
+Place Messages.csv and Types.csv from the Garmin profile in this directory. Update 
+the profile version in version.txt if necessary.
 
 The CSV files should have the column names as first row.
 

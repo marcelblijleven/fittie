@@ -1,3 +1,4 @@
+import fileinput
 import logging
 import pprint
 import re
@@ -342,6 +343,21 @@ def __write_to_file(
         )
 
 
+def write_profile_version():
+    import ast
+
+    with open("data/version.txt") as file:
+        version = file.read().rstrip("\n")
+
+    # Hacky solution
+    for line in fileinput.input("../fittie/__init__.py", inplace=True):
+        if "__PROFILE_VERSION__" in line:
+            print(f"__PROFILE_VERSION__ = \"{version}\"", end="\n")
+        else:
+            print(line, end="")
+
+
 if __name__ == "__main__":
     write_types_to_file(read_types())
     write_messages_to_file(read_messages())
+    write_profile_version()
