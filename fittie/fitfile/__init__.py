@@ -1,1 +1,1 @@
-from .fitfile import decode  # noqa
+from .decode import decode  # noqa
