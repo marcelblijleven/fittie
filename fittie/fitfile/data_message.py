@@ -147,8 +147,7 @@ def decode_data_message(
             )
 
         fields[field_profile.field_name] = field_data
-        if field_profile.field_name == "speed":
-            print(field_data)
+
         if field_profile.has_subfields:
             fields_with_subfields[field_profile.field_name] = field_profile
         if field_profile.has_components:
