@@ -23,6 +23,7 @@ def test_decode_data_message(record_1_definition_message):
         "product": 22,
         "serial_number": 1234,
         "time_created": 621463080,
+        "garmin_product": 22,  # Subfield
     }
 
 
