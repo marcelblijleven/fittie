@@ -141,10 +141,6 @@ def _retrieve_value(
 
         if base_type.value_type == str:
             value = b"".join(value).decode("utf-8")
-    elif base_type.name == "string":
-        # TODO: check if we can reach this separate from a multipart value
-        ...
-        value = None
     else:
         value = base_type.get_value(endianness, data)
 
@@ -171,7 +167,6 @@ def read_developer_field(
     endianness: str,
     data: Streamable,
 ) -> Any:
-    # TODO: move this to field_definitions
     """
     Read developer data field by field definition and field description
     """

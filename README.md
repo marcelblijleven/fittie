@@ -28,6 +28,8 @@ if __name__ == "__main__":
         print(data_message)
 ```
 
+For more information and examples, check [the documentation](https://marcelblijleven.github.io/fittie/)
+
 <!-- fitfile section -->
 ## Fitfile
 
@@ -110,8 +112,9 @@ for record in fitfile.get_messages_by_type("record")[:5]:
 <!-- end fitfile section -->
 
 ## TODO:
- - handle components, accumulators etc
- - handle chained FIT
- - compressed timestamps
- - move record_header into record, instead of reading it separately
- - encoding
+ * Handle component fields
+ * Handle accumulators
+ * Handle chained FIT files
+ * Handle compressed timestamps
+ * move record_header into record, instead of reading it separately
+ * encoding

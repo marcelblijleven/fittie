@@ -2,23 +2,16 @@ from __future__ import annotations  # Added for type hints
 
 import functools
 import itertools
-import struct
 
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from pathlib import Path
-from typing import Any, DefaultDict, Optional, Union, Iterable
+from typing import Any, Optional, Iterable
 
 from fittie.fitfile.profile.messages import MESSAGES
-from fittie.utils.datastream import DataStream, Streamable
-from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
-from fittie.fitfile.field_description import FieldDescription
-from fittie.fitfile.header import Header, decode_header
+from fittie.fitfile.header import Header
 from fittie.fitfile.profile.fit_types import FIT_TYPES
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
-from fittie.fitfile.records import read_record_header, read_record
 from fittie.fitfile.util import datetime_from_timestamp
 
 
@@ -170,80 +163,3 @@ class FitFile(_IterableMixin):
             raise ValueError(f"unknown message type '{message_type}' received")
 
         return self.data_messages.get(message_type, [])
-
-
-def decode(
-    source: Union[str, Path, Streamable], calculate_crc: Optional[bool] = True
-) -> FitFile:
-    """
-    Decode a fit file
-    """
-    with DataStream(source) as data:
-        if not calculate_crc:
-            # Don't calculate checksum
-            data.should_calculate_crc = False
-
-        header = decode_header(data)
-
-        local_message_definitions: dict[int, DefinitionMessage] = {}
-        developer_data: dict[int, dict[str, Any]] = {}
-        messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
-
-        while data.tell() < header.length + header.data_size:
-            # Read record header
-            record_header = read_record_header(data)
-
-            # Read message
-            message = read_record(
-                record_header,
-                local_message_definitions.get(record_header.local_message_type),
-                developer_data,
-                data,
-            )
-
-            # Assign message to correct collection
-            if record_header.is_compressed_timestamp_message:
-                # TODO:
-                ...
-            elif record_header.is_developer_data or record_header.is_definition_message:
-                # TODO: check if this can be merged with is_definition_message
-                local_message_definitions[record_header.local_message_type] = message
-            else:
-                if (
-                    global_message_type := local_message_definitions.get(
-                        record_header.local_message_type
-                    ).global_message_type
-                ) == 207:
-                    # Add developer data index
-                    index = message.fields["developer_data_index"]
-                    developer_data[index] = message.fields
-                    developer_data[index].update({"fields": {}})
-                elif global_message_type == 206:
-                    # Add field descriptions
-                    index = message.fields["developer_data_index"]
-                    field = FieldDescription(**message.fields)
-                    developer_data[index]["fields"][
-                        field.field_definition_number
-                    ] = field
-
-                messages[MESG_NUMS[global_message_type]].append(message)
-
-        calculated_crc = data.calculated_crc
-        (crc,) = struct.unpack("H", data.read(2))
-
-        if calculate_crc and crc != calculated_crc:
-            raise DecodeException(
-                detail=(
-                    "the calculated crc does not match the crc at the end of the file"
-                ),
-                position=data.tell(),
-            )
-
-    fitfile = FitFile(
-        header=header,
-        data_messages=messages,
-        local_message_definitions=local_message_definitions,
-        developer_data=developer_data,
-    )
-
-    return fitfile

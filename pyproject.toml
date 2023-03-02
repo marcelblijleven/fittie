@@ -68,7 +68,8 @@ omit = [
 [tool.commitizen]
 version = "0.6.0"
 version_files = [
-    "pyproject.toml"
+    "pyproject.toml",
+    "fittie/__init__.py"
 ]
 update_changelog_on_bump = true
 tag_format = "v$major.$minor.$patch$prerelease"

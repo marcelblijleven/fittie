@@ -1,3 +1,4 @@
+import fileinput
 import logging
 import pprint
 import re
@@ -8,6 +9,7 @@ from datetime import datetime
 from typing import Any, Optional, Union
 
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
+from fittie.fitfile.profile.fit_types import FIT_TYPES
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -146,6 +148,9 @@ def read_messages() -> dict[str, Any]:
 
     logger.debug("starting with parsing messages")
 
+    field_map = {}
+    last_field = None
+
     for row in reader:
         if can_ignore_row(row):
             group = get_value(row, MESSAGES_FIELD_TYPE_COLUMN)
@@ -161,9 +166,10 @@ def read_messages() -> dict[str, Any]:
             }
         else:
             definition_number = get_value(row, MESSAGES_DEFINITION_NUMBER_COLUMN)
+
             array_value = get_array_value(get_value(row, MESSAGES_ARRAY_COLUMN))
 
-            messages[last_message_num]["fields"][definition_number] = {
+            field = {
                 "field_name": get_value(row, MESSAGES_FIELD_NAME_COLUMN),
                 "field_type": get_value(row, MESSAGES_FIELD_TYPE_COLUMN),
                 "array": array_value,
@@ -180,18 +186,104 @@ def read_messages() -> dict[str, Any]:
                 "accumulate": get_accumulate(
                     get_value(row, MESSAGES_ACCUMULATE_COLUMN)
                 ),
-                "ref_field_name": get_components(
-                    get_value(row, MESSAGES_REF_FIELD_NAME_COLUMN)
-                ),
-                "ref_field_value": get_components(
-                    get_value(row, MESSAGES_REF_FIELD_VALUE_COLUMN)
-                ),
+                # "ref_field_name": get_components(
+                #     get_value(row, MESSAGES_REF_FIELD_NAME_COLUMN)
+                # ),
+                # "ref_field_value": get_components(
+                #     get_value(row, MESSAGES_REF_FIELD_VALUE_COLUMN)
+                # ),
+                "subfields": [],
                 "comment": get_value(row, MESSAGES_COMMENT_COLUMN),
             }
 
+            if definition_number is not None:
+                # Regular field
+                messages[last_message_num]["fields"][definition_number] = field
+                field_map[field["field_name"]] = definition_number, field
+                last_field = field
+            else:
+                # Subfield, delete some keys and add it as a subfield to last field
+                del field["accumulate"]
+                del field["subfields"]
+
+                field["ref_field_name"] = get_components(
+                    get_value(row, MESSAGES_REF_FIELD_NAME_COLUMN)
+                )
+                field["ref_field_value"] = get_components(
+                    get_value(row, MESSAGES_REF_FIELD_VALUE_COLUMN)
+                )
+
+                field["refs"] = []
+                #
+                # if isinstance(ref_field_name, list):
+                #     for name, value in zip(ref_field_name, ref_field_value):
+                #         ref_field_number, ref_field = field_map[name]
+                #
+                #         values = FIT_TYPES[ref_field["field_type"]]["values"]
+                #
+                #         for value_number, data in values.items():
+                #             if data["value_name"] == value:
+                #                 field["ref"].append({
+                #                     "field_number": ref_field_number,
+                #                     "value_number": value_number,
+                #                     "value_name": value,
+                #                     "field_name": name,
+                #                 }
+                #                 )
+                #
+                # else:
+                #     ref_field_number, ref_field = field_map[ref_field_name]
+                #
+                #     values = FIT_TYPES[ref_field["field_type"]]["values"]
+                #
+                #     for value_number, data in values.items():
+                #         if data["value_name"] == ref_field_value:
+                #             field["ref"].append({
+                #                 "field_number": ref_field_number,
+                #                 "value_number": value_number,
+                #                 "value_name": ref_field_value,
+                #                 "field_name": ref_field_name,
+                #             }
+                #             )
+                last_field["subfields"].append(field)
+
+    add_subfield_refs(messages, field_map)
     logger.debug(f"parsing messages finished, {len(messages.keys())} messages parsed")
 
     return messages
+
+
+def add_subfield_refs(messages: dict, field_map: dict):
+    for message_number, message in messages.items():
+        for field_number, field in message["fields"].items():
+            for subfield in field["subfields"]:
+                ref_field_name = subfield["ref_field_name"]
+                ref_field_value = subfield["ref_field_value"]
+
+                if isinstance(ref_field_name, str):
+                    subfield["refs"].append(
+                        find_subfield_ref(ref_field_name, ref_field_value, field_map)
+                    )
+                else:
+                    for name, value in zip(ref_field_name, ref_field_value):
+                        subfield["refs"].append(
+                            find_subfield_ref(name, value, field_map)
+                        )
+
+
+def find_subfield_ref(name: str, value: str, field_map: dict) -> dict:
+    number, field = field_map[name]
+    fit_type_values = FIT_TYPES[field["field_type"]]["values"]
+    refs = []
+
+    for value_number, data in fit_type_values.items():
+        if data["value_name"] == value:
+            return {
+                "field_number": number,
+                "value_number": value_number,
+                "value_name": value,
+                "field_name": name,
+            }
 
 
 def read_types() -> dict[str, Any]:
@@ -251,6 +343,21 @@ def __write_to_file(
         )
 
 
+def write_profile_version():
+    import ast
+
+    with open("data/version.txt") as file:
+        version = file.read().rstrip("\n")
+
+    # Hacky solution
+    for line in fileinput.input("../fittie/__init__.py", inplace=True):
+        if "__PROFILE_VERSION__" in line:
+            print(f"__PROFILE_VERSION__ = \"{version}\"", end="\n")
+        else:
+            print(line, end="")
+
+
 if __name__ == "__main__":
     write_types_to_file(read_types())
     write_messages_to_file(read_messages())
+    write_profile_version()

@@ -1,6 +1,7 @@
 from io import BytesIO
 
-from fittie.fitfile.data_message import decode_data_message
+from fittie.fitfile.data_message import decode_data_message, add_subfields_to_fields
+from fittie.fitfile.profile.util import get_message_profile
 from fittie.fitfile.records import RecordHeader
 
 
@@ -22,6 +23,7 @@ def test_decode_data_message(record_1_definition_message):
         "product": 22,
         "serial_number": 1234,
         "time_created": 621463080,
+        "garmin_product": 22,  # Subfield
     }
 
 
@@ -50,3 +52,21 @@ def test_decode_data_message_with_developer_fields(record_5_definition_message):
         "field_name": "doughnuts earned",
         "units": "doughnuts",
     }
+
+
+def test_add_subfields_to_fields():
+    fields = {
+        "type": 9,
+        "manufacturer": 15,
+        "product": 22,
+        "serial_number": 1234,
+        "time_created": 621463080,
+    }
+    field_profile = get_message_profile(0).fields[2]
+    fields_with_components = []
+    subfield_names = add_subfields_to_fields(
+        fields, field_profile, fields_with_components
+    )
+    assert subfield_names == ["garmin_product"]
+    assert "garmin_product" in fields
+    assert fields["product"] == fields["garmin_product"]

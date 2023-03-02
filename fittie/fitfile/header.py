@@ -105,6 +105,4 @@ def decode_header(data: Streamable) -> Header:
         crc=crc,
     )
 
-    # TODO: compute CRC and check
-
     return header

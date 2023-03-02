@@ -1,7 +1,9 @@
 from __future__ import annotations  # Added for type hints
-
+import logging
+from copy import deepcopy
 from typing import Any, Optional, TYPE_CHECKING
 
+from fittie.fitfile.profile import FieldProfile
 from fittie.utils.datastream import Streamable
 from fittie.utils.exceptions import DecodeException
 from fittie.fitfile.definition_message import DefinitionMessage
@@ -9,6 +11,7 @@ from fittie.fitfile.field_definitions import read_field, read_developer_field
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.util import get_message_profile
 
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from fittie.fitfile.records import RecordHeader
@@ -49,6 +52,41 @@ class DataMessage:
         return str(self)
 
 
+def add_subfields_to_fields(
+    fields: dict[str, Any],
+    field_profile: FieldProfile,
+    fields_with_components: list[str],
+) -> list[str]:
+    """
+    Adds the field value of a DataMessage field that matches the provided field profile
+    as an extra field to the DataMessage fields.
+
+    For each subfield, it checks if the field name exists in the current fields dict,
+    if so it checks if the field value equals the reference value number.
+
+    If it finds a match, it adds the original field value to the fields dict, with the
+    subfield name as key.
+
+    For example {"product": 22} as fields, becomes {"product": 22, "garmin_product": 22}
+    """
+
+    subfield_names = []
+
+    for subfield in field_profile.subfields:
+        for reference in subfield.refs:
+            if not (field_value := fields.get(reference["field_name"])):
+                continue
+
+            if reference["value_number"] == field_value:
+                subfield_names.append(subfield.field_name)
+                fields[subfield.field_name] = deepcopy(fields[field_profile.field_name])
+
+                if subfield.has_components:
+                    fields_with_components.append(subfield.field_name)
+
+    return subfield_names
+
+
 def decode_data_message(
     header: "RecordHeader",
     message_definition: DefinitionMessage,
@@ -58,18 +96,35 @@ def decode_data_message(
     message_profile = get_message_profile(message_definition.global_message_type)
 
     fields: dict[str, Any] = {}
+    fields_with_subfields: dict[str, FieldProfile] = {}
+    fields_with_components: list[str] = []
+    subfield_names = []
 
     for field in message_definition.field_definitions:
         field_profile = message_profile.fields[field.number]
         field_data = read_field(
             field_definition=field,
-            # field_profile=field_profile,
             endianness=message_definition.endianness,
             data=data,
         )
-
-        # TODO: components, accumulate etc (from field_profile?)
         fields[field_profile.field_name] = field_data
+
+        if field_profile.has_subfields:
+            fields_with_subfields[field_profile.field_name] = field_profile
+        if field_profile.has_components:
+            fields_with_components.append(field_profile.field_name)
+
+    # TODO: components, accumulate etc (from field_profile?)
+    if fields_with_subfields:
+        for field, field_profile in fields_with_subfields.items():
+            subfield_names += add_subfields_to_fields(
+                fields, field_profile, fields_with_components
+            )
+    if fields_with_components:
+        logger.debug(f"components not implemented yet, {fields_with_components=}")
+
+    # if field_profile.accumulate:
+    #     ...
 
     if message_definition.developer_field_definitions and not developer_data:
         raise DecodeException(
