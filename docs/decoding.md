@@ -66,3 +66,20 @@ The return type of `decode` is the `FitFile` class. This class exposes several m
 and properties which the user can access, like a collection of list of `DataMessage`.
 
 More information about iteration over these lists of `DataMessage` can be found [here](iterating_data.md).
+
+## Decode file type
+
+If you're only interested in reading the file type, use the `decode_file_type` function.
+It assumes the FIT file is encoded according to the protocol's best practices and begins 
+with the following structure:
+* A file header
+* A file_id definition message
+* A file_id data message
+
+If not, it will raise a `DecodeException` and no data will be returned.
+
+```python
+from fittie.fitfile.decode import decode_file_type
+
+file_type = decode_file_type("/path/to/fit/file.fit")
+```
