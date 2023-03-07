@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import BinaryIO
+
 import pytest
 
 from fittie.fitfile.data_message import DataMessage
@@ -7,7 +10,7 @@ from fittie.fitfile.fitfile import FitFile
 from fittie.fitfile.header import Header
 from fittie.fitfile.profile.base_types import BASE_TYPES
 from fittie.fitfile.records import RecordHeader
-from fittie.utils.endianness import Endianness
+from fittie.fitfile.utils.endianness import Endianness
 
 
 @pytest.fixture
@@ -119,3 +122,18 @@ def record_5_definition_message():
             FieldDefinition(number=8, size=16, base_type=BASE_TYPES[7]),
         ],
     )
+
+
+@pytest.fixture
+def load_fit_file(request):
+    if not request.param:
+        raise ValueError(
+            "no filename provided, decorate the test function with "
+            '@pytest.mark.parametrize("fixture name",[value], indirect=True)'
+        )
+
+    parent_dir = Path(__file__).parent
+    filepath = parent_dir / "data" / request.param
+
+    with open(filepath, "rb") as file:
+        yield file
