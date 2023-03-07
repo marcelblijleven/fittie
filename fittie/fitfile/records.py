@@ -1,11 +1,11 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from typing import Optional, Any
+from typing import Optional, Any, Union
 
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
-from fittie.fitfile.data_message import decode_data_message
+from fittie.fitfile.data_message import decode_data_message, DataMessage
 from fittie.fitfile.definition_message import (
     DefinitionMessage,
     decode_definition_message,
@@ -107,22 +107,20 @@ def read_record_header(data: Streamable) -> RecordHeader:
         ) from exc
 
 
-def read_record(
-    record_header: RecordHeader,
-    definition_message: Optional[DefinitionMessage],
+def read_message(
+    local_message_definitions: dict[int, DefinitionMessage],
     developer_data: dict[int, dict[str, Any]],
     data: Streamable,
-) -> Any:  # TODO: add ABC Message type
+) -> Union[DefinitionMessage, DataMessage]:
+    record_header = read_record_header(data)
+    definition_message = local_message_definitions.get(record_header.local_message_type)
+
     if record_header.is_compressed_timestamp_message:
         # TODO
         ...
-        return
+        return  # noqa
 
-    if record_header.is_developer_data:
-        # TODO: check if this works correctly
-        return decode_definition_message(record_header, data)
-
-    if record_header.is_definition_message:
+    if record_header.is_developer_data or record_header.is_definition_message:
         return decode_definition_message(record_header, data)
 
     # Record is a data message
