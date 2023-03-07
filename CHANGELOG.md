@@ -1,3 +1,9 @@
+## v0.8.1 (2023-03-07)
+
+### Bugfixes 🐛
+
+- add type annotations from future to make it python 3.8 compatible
+
 ## v0.8.0 (2023-03-07)
 
 ### Bugfixes 🐛
