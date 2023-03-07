@@ -1,3 +1,6 @@
+from __future__ import annotations  # Added for type hints
+
+
 def get_gear_change_data(data: int) -> dict[str, int]:
     """
     Reads rear gear number, rear gear, front gear number, front gear
