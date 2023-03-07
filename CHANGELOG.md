@@ -1,3 +1,20 @@
+## v0.8.0 (2023-03-07)
+
+### Bugfixes 🐛
+
+- scale is not applied correctly to subfields
+- add type annotations from future for 3.8 compatibility
+
+### Features ✨
+
+- add enrich data util
+- add gear change data util
+
+### refactor
+
+- simplify decoding of messages, rename read_record to read_message
+- move fitfile related utils to fitfile package
+
 ## v0.7.0 (2023-03-02)
 
 ### Features ✨
