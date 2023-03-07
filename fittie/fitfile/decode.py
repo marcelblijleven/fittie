@@ -8,8 +8,8 @@ from typing import Any, DefaultDict, Optional, Union
 
 from fittie.fitfile.fitfile import FitFile
 from fittie.fitfile.profile.fit_types import FIT_TYPES
-from fittie.utils.datastream import DataStream, Streamable
-from fittie.utils.exceptions import DecodeException
+from fittie.fitfile.utils.datastream import DataStream, Streamable
+from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_description import FieldDescription

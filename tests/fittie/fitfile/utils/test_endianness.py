@@ -1,4 +1,4 @@
-from fittie.utils.endianness import Endianness
+from fittie.fitfile.utils.endianness import Endianness
 
 
 def test_endianness():

@@ -3,8 +3,8 @@ from __future__ import annotations  # Added for type hints
 import struct
 from typing import Any
 
-from fittie.utils.datastream import Streamable
-from fittie.utils.exceptions import DecodeException
+from fittie.fitfile.utils.datastream import Streamable
+from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.base_types import BaseType, BASE_TYPES
 
@@ -138,6 +138,9 @@ def _retrieve_value(
                 value.append(None)
             else:
                 value.append(n_value)
+
+        if not any(filter(None, value)):
+            return None
 
         if base_type.value_type == str:
             value = b"".join(value).decode("utf-8")

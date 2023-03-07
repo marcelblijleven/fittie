@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 import tempfile
 
-from fittie.utils.datastream import DataStream
+from fittie.fitfile.utils.datastream import DataStream
 from fittie.fitfile.crc import apply_crc
 
 
@@ -55,7 +55,7 @@ def test_datastream_crc():
     assert datastream.calculated_crc == 0
 
     with patch(
-        "fittie.utils.datastream.apply_crc", side_effect=apply_crc
+        "fittie.fitfile.utils.datastream.apply_crc", side_effect=apply_crc
     ) as patched_apply_crc:
         datastream.read()
 
@@ -69,7 +69,7 @@ def test_datastream_crc__crc_disabled():
     assert datastream.calculated_crc == 0
 
     with patch(
-        "fittie.utils.datastream.apply_crc", side_effect=apply_crc
+        "fittie.fitfile.utils.datastream.apply_crc", side_effect=apply_crc
     ) as patched_apply_crc:
         datastream.read()
 

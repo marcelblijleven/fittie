@@ -2,8 +2,11 @@ from io import BytesIO
 
 import pytest
 
-from fittie.fitfile.data_message import decode_data_message, add_subfields_to_fields, \
-    apply_scale_and_offset
+from fittie.fitfile.data_message import (
+    decode_data_message,
+    add_subfields_to_fields,
+    apply_scale_and_offset,
+)
 from fittie.fitfile.profile.util import get_message_profile
 from fittie.fitfile.records import RecordHeader
 
@@ -83,8 +86,8 @@ def test_add_subfields_to_fields():
         ([1, 2], 10, 1, [-0.9, -0.8]),
         ([1, 2], [10, 100], 0, [0.1, 0.02]),
         (None, 10, 10, None),
-        ([None, None], 10, 10, [None, None])
-    ]
+        ([None, None], 10, 10, [None, None]),
+    ],
 )
 def test_apply_scale_and_offset(value, scale, offset, expected):
     assert apply_scale_and_offset(value, scale, offset) == expected
