@@ -54,6 +54,7 @@ class DataMessage:
 
 def add_subfields_to_fields(
     fields: dict[str, Any],
+    fields_raw: dict[str, Any],
     field_profile: FieldProfile,
     fields_with_components: list[str],
 ) -> list[str]:
@@ -65,7 +66,8 @@ def add_subfields_to_fields(
     if so it checks if the field value equals the reference value number.
 
     If it finds a match, it adds the original field value to the fields dict, with the
-    subfield name as key.
+    subfield name as key. The original value is retrieved from
+    fields_raw, these values are not affected by scale / offset.
 
     For example {"product": 22} as fields, becomes {"product": 22, "garmin_product": 22}
     """
@@ -79,7 +81,16 @@ def add_subfields_to_fields(
 
             if reference["value_number"] == field_value:
                 subfield_names.append(subfield.field_name)
-                fields[subfield.field_name] = deepcopy(fields[field_profile.field_name])
+                field_data = deepcopy(fields_raw[field_profile.field_name])
+
+                if subfield.scale is not None or subfield.offset is not None:
+                    field_data = apply_scale_and_offset(
+                        field_data,
+                        subfield.scale,
+                        subfield.offset
+                    )
+
+                fields[subfield.field_name] = field_data
 
                 if subfield.has_components:
                     fields_with_components.append(subfield.field_name)
@@ -127,6 +138,9 @@ def decode_data_message(
     message_profile = get_message_profile(message_definition.global_message_type)
 
     fields: dict[str, Any] = {}
+    # Field values without scale and offset applied,
+    # used for subfields
+    fields_raw: dict[str, Any] = {}
     fields_with_subfields: dict[str, FieldProfile] = {}
     fields_with_components: list[str] = []
     subfield_names = []
@@ -138,6 +152,7 @@ def decode_data_message(
             endianness=message_definition.endianness,
             data=data,
         )
+        fields_raw[field_profile.field_name] = field_data
 
         if field_profile and (
             field_profile.scale is not None or field_profile.offset is not None
@@ -157,7 +172,7 @@ def decode_data_message(
     if fields_with_subfields:
         for field, field_profile in fields_with_subfields.items():
             subfield_names += add_subfields_to_fields(
-                fields, field_profile, fields_with_components
+                fields, fields_raw, field_profile, fields_with_components
             )
     if fields_with_components:
         logger.debug(f"components not implemented yet, {fields_with_components=}")

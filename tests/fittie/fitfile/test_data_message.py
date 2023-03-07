@@ -1,3 +1,4 @@
+import copy
 from io import BytesIO
 
 import pytest
@@ -68,10 +69,11 @@ def test_add_subfields_to_fields():
         "serial_number": 1234,
         "time_created": 621463080,
     }
+    fields_raw = copy.deepcopy(fields)
     field_profile = get_message_profile(0).fields[2]
     fields_with_components = []
     subfield_names = add_subfields_to_fields(
-        fields, field_profile, fields_with_components
+        fields, fields_raw, field_profile, fields_with_components
     )
     assert subfield_names == ["garmin_product"]
     assert "garmin_product" in fields

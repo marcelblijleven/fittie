@@ -54,3 +54,29 @@ def test_developer_fields(load_fit_file):
     fields = fitfile.developer_data[0]["fields"]
     assert (banana_field := fields[0]).field_name == "bananas_traversed"
     assert banana_field.units == "bananas"
+
+
+@pytest.mark.parametrize("load_fit_file", ["fittie_settings_file.fit"], indirect=True)
+def test_gearshifts(load_fit_file):
+    fitfile = decode(load_fit_file)
+    assert fitfile.file_type == "settings"
+    assert (user_profile_messages := fitfile.data_messages.get("user_profile")) is not None
+    assert user_profile_messages[0].fields["gender"] == 1
+    assert user_profile_messages[0].fields["age"] == 33
+    assert user_profile_messages[0].fields["weight"] == 80.1
+    assert user_profile_messages[0].fields["friendly_name"] == "Fittie McFitface"
+
+
+@pytest.mark.parametrize("load_fit_file", ["fittie_monitoring_file.fit"], indirect=True)
+def test_monitoring_file(load_fit_file):
+    """NOTE: This file has accumulated fields"""
+    fitfile = decode(load_fit_file)
+    assert fitfile.file_type == "monitoring_b"
+
+    monitoring_messages = fitfile.get_messages_by_type("monitoring")
+
+    assert len(monitoring_messages) == 24  # 24 hours
+
+    for message in monitoring_messages:
+        # Test if subfield has "scale" applied correctly
+        assert message.fields["cycles"] * 2 == message.fields["steps"]
