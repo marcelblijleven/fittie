@@ -4,7 +4,6 @@ from copy import deepcopy
 from typing import Any, Optional, TYPE_CHECKING
 
 from fittie.fitfile.profile import FieldProfile
-from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.definition_message import DefinitionMessage
