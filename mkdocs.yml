@@ -5,6 +5,7 @@ nav:
   - Getting started:
     - Decoding: decoding.md
     - Iterating over data: iterating_data.md
+    - Utils: utils.md
     - Examples:
         - Filtered fields: examples/filtered_fields.md
         - Normalized power: examples/normalized_power.md
