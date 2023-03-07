@@ -80,3 +80,9 @@ def test_monitoring_file(load_fit_file):
     for message in monitoring_messages:
         # Test if subfield has "scale" applied correctly
         assert message.fields["cycles"] * 2 == message.fields["steps"]
+
+
+@pytest.mark.parametrize("load_fit_file", ["fittie_chained_fitfiles.fit"], indirect=True)
+def test_chained_fit_files(load_fit_file):
+    fitfile = decode(load_fit_file)
+    ...

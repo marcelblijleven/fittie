@@ -15,7 +15,7 @@ from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.header import decode_header
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
-from fittie.fitfile.records import read_record_header, read_record
+from fittie.fitfile.records import read_record_header, read_message
 
 
 def decode(
@@ -36,28 +36,19 @@ def decode(
         messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
 
         while data.tell() < header.length + header.data_size:
-            # Read record header
-            record_header = read_record_header(data)
-
             # Read message
-            message = read_record(
-                record_header,
-                local_message_definitions.get(record_header.local_message_type),
+            message = read_message(
+                local_message_definitions,
                 developer_data,
                 data,
             )
 
-            # Assign message to correct collection
-            if record_header.is_compressed_timestamp_message:
-                # TODO:
-                ...
-            elif record_header.is_developer_data or record_header.is_definition_message:
-                # TODO: check if this can be merged with is_definition_message
-                local_message_definitions[record_header.local_message_type] = message
+            if isinstance(message, DefinitionMessage):
+                local_message_definitions[message.header.local_message_type] = message
             else:
                 if (
                     global_message_type := local_message_definitions.get(
-                        record_header.local_message_type
+                        message.header.local_message_type
                     ).global_message_type
                 ) == 207:
                     # Add developer data index
@@ -115,7 +106,7 @@ def decode_file_type(source: Union[str, Path, Streamable]) -> str:
 
         file_id_definition_message_record_header = read_record_header(data)
 
-        file_id_definition_message: DefinitionMessage = read_record(
+        file_id_definition_message: DefinitionMessage = read_message(
             file_id_definition_message_record_header,
             local_message_definitions.get(
                 file_id_definition_message_record_header.local_message_type
@@ -138,7 +129,7 @@ def decode_file_type(source: Union[str, Path, Streamable]) -> str:
         ] = file_id_definition_message
 
         file_id_data_message_record_header = read_record_header(data)
-        file_id_data_message: DataMessage = read_record(
+        file_id_data_message: DataMessage = read_message(
             file_id_data_message_record_header,
             local_message_definitions.get(
                 file_id_data_message_record_header.local_message_type
