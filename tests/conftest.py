@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import BinaryIO
 
 import pytest
-
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_definitions import FieldDefinition
