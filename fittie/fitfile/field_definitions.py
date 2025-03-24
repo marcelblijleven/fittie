@@ -131,7 +131,7 @@ def _retrieve_value(
             n_value = base_type.get_value(endianness, data)
 
             # Null terminated string check
-            if base_type.value_type == str and n_value == b"\x00":
+            if base_type.value_type is str and n_value == b"\x00":
                 continue  # Just continue, there can be more than one \x00
 
             if n_value == base_type.invalid_value:
@@ -142,7 +142,7 @@ def _retrieve_value(
         if not any(filter(None, value)):
             return None
 
-        if base_type.value_type == str:
+        if base_type.value_type is str:
             value = b"".join(value).decode("utf-8")
     else:
         value = base_type.get_value(endianness, data)

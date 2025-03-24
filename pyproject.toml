@@ -1,78 +1,48 @@
-[build-system]
-requires = ["setuptools>=65.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "fittie"
 version = "0.8.1"
 description = "FIT file tool"
-authors = [
-    { name = "Marcel Blijleven" }
-]
-maintainers = [
-    { name = "Marcel Blijleven" }
-]
 readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Marcel Blijleven" }]
+maintainers = [{ name = "Marcel Blijleven" }]
 license = { file = "LICENSE" }
-requires-python = ">=3.8"
-keywords = [
-    "fit",
-    "fitfile",
-    "fitfile decode",
-    "decoding",
-    "garmin",
-]
+keywords = ["fit", "fitfile", "fitfile decode", "decoding", "garmin"]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
-
-[project.optional-dependencies]
-dev = [
-    "black == 22.10.0",
-    "ruff == 0.0.246",
-    "pytest == 7.2.0"
-]
-
-[project.urls]
-Homepage = "https://github.com/marcelblijleven/fittie"
-repository = "https://github.com/marcelblijleven/fittie"
-
-[tool.setuptools.packages.find]
-exclude = [
-    ".github",
-    "examples",
-    "scripts",
-    "tests"
+dependencies = [
+    "pydantic>=2.10.6",
 ]
 
 [tool.ruff]
 line-length = 88
-exclude = [
-    ".git",
-    "*.json",
-    "fittie/fitfile/profile/fit_types.py"
-]
+exclude = [".git", "*.json", "fittie/fitfile/profile/fit_types.py"]
 
 [tool.coverage.run]
 omit = [
-    "fittie/fitfile/profile/fit_types.py",
-    "fittie/fitfile/profile/mesg_nums.py",
-    "fittie/fitfile/profile/messages.py"
+  "fittie/fitfile/profile/fit_types.py",
+  "fittie/fitfile/profile/mesg_nums.py",
+  "fittie/fitfile/profile/messages.py",
 ]
 
 [tool.commitizen]
 version = "0.8.1"
-version_files = [
-    "pyproject.toml",
-    "fittie/__init__.py"
-]
+version_files = ["pyproject.toml", "fittie/__init__.py"]
 update_changelog_on_bump = true
 tag_format = "v$major.$minor.$patch$prerelease"
 annotated_tag = true
-major_version_zero = true  # Disable this when ready to go to 1.0.0
+major_version_zero = true                                         # Disable this when ready to go to 1.0.0
 change_type_map = { "feat" = "Features ✨", "fix" = "Bugfixes 🐛" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.11.2",
+]
