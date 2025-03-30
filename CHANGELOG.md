@@ -1,3 +1,13 @@
+## v0.9.0 (2025-03-30)
+
+### Bugfixes 🐛
+
+- handle unknown messages and fields
+
+### Features ✨
+
+- **profile**: add support for profile version 21.158.00
+
 ## v0.8.1 (2023-03-07)
 
 ### Bugfixes 🐛
