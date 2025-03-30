@@ -3,6 +3,7 @@ name: Upload Python Package
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,10 +22,7 @@ jobs:
         version: "0.6.9"
 
     - name: Build package
-      run: uv build
+      run: uv sync && uv build
 
     - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      env:
-        UV_PUBLISH_USERNAME: __token__
-        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: uv publish --token "${{ secrets.PYPI_API_TOKEN }}"
