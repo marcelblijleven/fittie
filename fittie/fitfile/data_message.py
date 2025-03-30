@@ -11,7 +11,7 @@ from fittie.fitfile.field_definitions import read_field, read_developer_field
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.util import get_message_profile
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("fittie")
 
 if TYPE_CHECKING:
     from fittie.fitfile.records import RecordHeader
@@ -134,9 +134,8 @@ def decode_data_message(
     message_definition: DefinitionMessage,
     developer_data: dict[int, dict[str, dict[int, FieldDescription]]],
     data: Streamable,
-) -> DataMessage:
+) -> DataMessage | None:
     message_profile = get_message_profile(message_definition.global_message_type)
-
     fields: dict[str, Any] = {}
     # Field values without scale and offset applied,
     # used for subfields
@@ -146,13 +145,15 @@ def decode_data_message(
     subfield_names = []
 
     for field in message_definition.field_definitions:
-        field_profile = message_profile.fields[field.number]
+        message_profile_name = message_profile.name if message_profile else f"unknown_{message_definition.global_message_type}"
+        field_profile = message_profile.fields.get(field.number) if message_profile else None
         field_data = read_field(
             field_definition=field,
             endianness=message_definition.endianness,
             data=data,
         )
-        fields_raw[field_profile.field_name] = field_data
+        field_name = field_profile.field_name if field_profile else f"{message_profile_name}_unknown_field_{field.number}"
+        fields_raw[field_name] = field_data
 
         if field_profile and (
             field_profile.scale is not None or field_profile.offset is not None
@@ -161,12 +162,13 @@ def decode_data_message(
                 field_data, scale=field_profile.scale, offset=field_profile.offset
             )
 
-        fields[field_profile.field_name] = field_data
+        fields[field_name] = field_data
 
-        if field_profile.has_subfields:
-            fields_with_subfields[field_profile.field_name] = field_profile
-        if field_profile.has_components:
-            fields_with_components.append(field_profile.field_name)
+        if field_profile:
+            if field_profile.has_subfields:
+                fields_with_subfields[field_name] = field_profile
+            if field_profile.has_components:
+                fields_with_components.append(field_name)
 
     # TODO: components, accumulate etc (from field_profile?)
     if fields_with_subfields:

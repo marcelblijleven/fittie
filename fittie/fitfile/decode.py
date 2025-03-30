@@ -63,7 +63,10 @@ def decode(
                         field.field_definition_number
                     ] = field
 
-                messages[MESG_NUMS[global_message_type]].append(message)
+                if global_message_type in MESG_NUMS:
+                    messages[MESG_NUMS[global_message_type]].append(message)
+                else:
+                    messages[f"unknown_{global_message_type}"].append(message)
 
         calculated_crc = data.calculated_crc
         (crc,) = struct.unpack("H", data.read(2))
