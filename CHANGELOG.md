@@ -1,3 +1,9 @@
+## v0.10.0 (2025-03-31)
+
+### Features ✨
+
+- use dataclasses, fix type errors
+
 ## v0.9.1 (2025-03-30)
 
 ## v0.9.0 (2025-03-30)
