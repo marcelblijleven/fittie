@@ -1,7 +1,7 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from typing import Optional, Any, Union
+from typing import Optional, Any
 
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException

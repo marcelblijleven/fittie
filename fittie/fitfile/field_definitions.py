@@ -1,8 +1,7 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from collections.abc import Buffer
-from typing import Any, cast, Iterable, TypeVar
+from typing import Any, cast, TypeVar
 
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException

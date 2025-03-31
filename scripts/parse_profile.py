@@ -7,7 +7,7 @@ import re
 from black import format_str, FileMode
 from csv import DictReader
 from datetime import datetime
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, Union
 
 from fittie.fitfile.profile import MessageProfile, FieldProfile, SubField
 from fittie.fitfile.profile.field_type import FieldType, FieldTypeValue
@@ -336,7 +336,6 @@ def __write_to_file(
 
 
 def write_profile_version():
-    import ast
 
     with open("data/version.txt") as file:
         version = file.read().rstrip("\n")
