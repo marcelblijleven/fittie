@@ -4,7 +4,7 @@ import functools
 import itertools
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Iterable
+from typing import Any, Optional, Iterable, cast, TypedDict
 
 from fittie.fitfile.profile.messages import MESSAGES
 from fittie.fitfile.data_message import DataMessage
@@ -57,8 +57,12 @@ class _IterableMixin(ABC):
         return self
 
 
-class FitFile(_IterableMixin):
+class IterFilter(TypedDict):
+    fields: list[str]
+    message_type: str
 
+
+class FitFile(_IterableMixin):
     header: Header
     data_messages: dict[str, list[DataMessage]]
     local_message_definitions: dict[int, DefinitionMessage] = {}
@@ -85,13 +89,17 @@ class FitFile(_IterableMixin):
 
         return list(itertools.chain(*self.data_messages.values()))
 
-    def __call__(self, *, message_type: str, fields: Optional[list[str]] = None):
+    def __call__(self, *, message_type: str, fields: list[str] | None = None):
         """
         Makes the instance callable and adds filter options for a specific message
         type and keywords of field values to return while iterating
         """
-        self._iter_filter = {
-            "fields": fields or [],
+
+        if fields is None:
+            fields = []
+
+        self._iter_filter: IterFilter = {
+            "fields": fields,
             "message_type": message_type,
         }
 
@@ -110,16 +118,18 @@ class FitFile(_IterableMixin):
                 "no file_id message detected, FIT file is possible incorrect"
             )
 
-        file_id = {}
+        file_id: dict[str, Any] = {}
 
         # Should be just one file_id, but to be sure use latest from list
         for key, value in file_id_messages[-1].fields.items():
+            if not value:
+                continue
             if key == "time_created":
-                file_id[key] = datetime_from_timestamp(value)
+                file_id[key] = datetime_from_timestamp(cast(int, value))
             elif key == "type":
-                file_id[key] = FIT_TYPES["file"]["values"][value]["value_name"]
+                file_id[key] = FIT_TYPES["file"].values[value].value_name
             elif key == "manufacturer":
-                file_id[key] = FIT_TYPES["manufacturer"]["values"][value]["value_name"]
+                file_id[key] = FIT_TYPES["manufacturer"].values[value].value_name
             else:
                 file_id[key] = value
 
@@ -131,6 +141,10 @@ class FitFile(_IterableMixin):
         Returns the file type of the FIT File. The file type is retrieved from the
         file_id message, which is always present in a FIT file.
         """
+        if self.file_id is None:
+            raise ValueError(
+                "no file_id message detected, FIT file is possible incorrect"
+            )
         return self.file_id["type"]
 
     @property
@@ -139,16 +153,16 @@ class FitFile(_IterableMixin):
         return list(self.data_messages.keys())
 
     @functools.cached_property
-    def available_fields(self) -> dict[str, str]:
+    def available_fields(self) -> dict[str, str | None]:
         """Returns a list of all field names as key, with units as value"""
-        fields = {}
+        fields: dict[str, str | None] = {}
 
         for definition_message in self.local_message_definitions.values():
-            _fields = MESSAGES[definition_message.global_message_type]["fields"]
+            _fields = MESSAGES[definition_message.global_message_type].fields
 
             for field_definition in definition_message.field_definitions:
                 field = _fields[field_definition.number]
-                fields[field["field_name"]] = field["units"]
+                fields[field.field_name] = field.units
 
         return fields
 

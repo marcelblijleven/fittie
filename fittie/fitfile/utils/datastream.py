@@ -6,14 +6,11 @@ from fittie.fitfile.crc import apply_crc
 
 
 class Streamable(Protocol):
-    def read(self, size: Optional[int] = 1) -> bytes:
-        ...
+    def read(self, size: Optional[int] = 1) -> bytes: ...
 
-    def tell(self) -> int:
-        ...
+    def tell(self) -> int: ...
 
-    def close(self) -> None:
-        ...
+    def close(self) -> None: ...
 
 
 class DataStream:
@@ -56,7 +53,7 @@ class DataStream:
         """Resets the calculated crc back to 0"""
         self._calculated_crc = 0
 
-    def read(self, size: Optional[int] = 1) -> bytes:
+    def read(self, size: int = 1) -> bytes:
         """
         Reads the provided number of bits from the wrapped BinaryIO data
 

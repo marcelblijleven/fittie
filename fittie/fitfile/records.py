@@ -111,14 +111,14 @@ def read_message(
     local_message_definitions: dict[int, DefinitionMessage],
     developer_data: dict[int, dict[str, Any]],
     data: Streamable,
-) -> Union[DefinitionMessage, DataMessage]:
+) -> DefinitionMessage | DataMessage:
     record_header = read_record_header(data)
     definition_message = local_message_definitions.get(record_header.local_message_type)
 
     if record_header.is_compressed_timestamp_message:
         # TODO
         ...
-        return  # noqa
+        return  # type:ignore[return-value]
 
     if record_header.is_developer_data or record_header.is_definition_message:
         return decode_definition_message(record_header, data)
@@ -134,4 +134,5 @@ def read_message(
     message = decode_data_message(
         record_header, definition_message, developer_data, data
     )
+
     return message

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import struct
-from typing import Optional
+from typing import Optional, Generic, TypeVar
 
 from fittie.fitfile.utils.datastream import Streamable
 
+T = TypeVar("T")
 
-class BaseType:
+
+class BaseType(Generic[T]):
     """Representation of a Garmin FIT File Base Type"""
 
     number: int
@@ -15,7 +17,7 @@ class BaseType:
     invalid_value: int
     size: int
     fmt: str
-    value_type: type
+    value_type: type[T]
     comment: str
 
     def __init__(
@@ -26,7 +28,7 @@ class BaseType:
         invalid_value: int,
         size: int,
         fmt: str,
-        value_type: type,
+        value_type: type[T],
         comment: Optional[str] = None,
     ):
         self.number = number
@@ -44,9 +46,7 @@ class BaseType:
     def __repr__(self) -> str:
         return str(self)
 
-    def get_value(
-        self, endianness: str, data: Streamable
-    ) -> Optional[BaseType.value_type]:
+    def get_value(self, endianness: str, data: Streamable) -> T | None:
         # TODO: check for endian ability before creating fmt_string?
         fmt_string = f"{endianness}{self.fmt}"
 
@@ -58,7 +58,7 @@ class BaseType:
         return value
 
 
-BASE_TYPES = {
+BASE_TYPES: dict[int, BaseType] = {
     0x00: BaseType(
         number=0,
         endian_ability=0,

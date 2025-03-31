@@ -11,10 +11,10 @@ def get_gear_change_data(data: int) -> dict[str, int]:
     Each gear information is 8 bits long
     """
     gear_change_data = {
-        'rear_gear_number': data & 255,
-        'rear_gear': data >> 8 & 255,
-        'front_gear_number': data >> 16 & 255,
-        'front_gear': data >> 24 & 255,
+        "rear_gear_number": data & 255,
+        "rear_gear": data >> 8 & 255,
+        "front_gear_number": data >> 16 & 255,
+        "front_gear": data >> 24 & 255,
     }
 
     return gear_change_data

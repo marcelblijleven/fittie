@@ -1,24 +1,22 @@
-from __future__ import annotations  # added for type hints
-
 from dataclasses import dataclass
-from typing import Union, Optional
+from typing import Literal
 
 
 @dataclass
 class SubField:
     field_name: str
     field_type: str
-    refs: list[dict[str, Union[int, str]]]
-    array: Optional[Union[bool, str, int]] = None
-    components: Optional[Union[str, list[str]]] = None
-    scale: Optional[Union[int, list[int]]] = None
-    offset: Optional[int] = None
-    units: Optional[str] = None
-    bits: Optional[Union[int, str]] = None
-    accumulate: Optional[Union[int, list[int]]] = None
-    comment: Optional[str] = None
-    ref_field_name: Optional[Union[str, list[str]]] = None
-    ref_field_value: Optional[Union[str, list[str]]] = None
+    refs: list[dict[str, int | str] | None]
+    array: Literal[False] | Literal["N"] | int | None = None
+    components: str | list[str] | None = None
+    scale: float | int | list[int] | None = None
+    offset: int | None = None
+    units: str | None = None
+    bits: int | str | None = None
+    accumulate: int | list[int] | None = None
+    comment: str | None = None
+    ref_field_name: str | list[str] | None = None
+    ref_field_value: str | list[str] | None = None
 
     @property
     def is_array(self) -> bool:
@@ -35,15 +33,15 @@ class SubField:
 class FieldProfile:
     field_name: str
     field_type: str
-    array: Optional[Union[bool, str, int]] = None
-    components: Optional[Union[str, list[str]]] = None
-    scale: Optional[Union[int, list[int]]] = None
-    offset: Optional[int] = None
-    units: Optional[str] = None
-    bits: Optional[Union[int, str]] = None
-    accumulate: Optional[Union[int, list[int]]] = None
-    subfields: Optional[list[SubField]] = None
-    comment: Optional[str] = None
+    array: Literal[False] | Literal["N"] | int | None = None
+    components: str | list[str] | None = None
+    scale: float | int | list[int] | None = None
+    offset: int | None = None
+    units: str | None = None
+    bits: int | str | None = None
+    accumulate: int | list[int] | None = None
+    subfields: list[SubField] | None = None
+    comment: str | None = None
 
     @property
     def is_array(self) -> bool:
@@ -58,11 +56,13 @@ class FieldProfile:
     @property
     def has_subfields(self) -> bool:
         """Check whether the field has subfields"""
-        return self.subfields and len(self.subfields) > 0
+        if not self.subfields:
+            return False
+        return len(self.subfields) > 0
 
 
 @dataclass
 class MessageProfile:
     name: str
     fields: dict[int, FieldProfile]
-    group: str
+    group: str | None

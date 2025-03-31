@@ -15,6 +15,6 @@ def enrich_data(fields: dict[str, Any]) -> None:
 
         if key in FIT_TYPES:
             try:
-                fields[key] = FIT_TYPES[key]["values"][value]["value_name"]
+                fields[key] = FIT_TYPES[key].values[value].value_name
             except KeyError:
                 ...

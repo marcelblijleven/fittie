@@ -1,12 +1,16 @@
 from __future__ import annotations  # Added for type hints
 
 import struct
-from typing import Any
+from collections.abc import Buffer
+from typing import Any, cast, Iterable, TypeVar
 
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.profile.base_types import BaseType, BASE_TYPES
+
+
+T = TypeVar("T")
 
 
 class DeveloperFieldDefinition:
@@ -116,12 +120,12 @@ def decode_field_definition(data: Streamable) -> FieldDefinition:
 
 def _retrieve_value(
     number_of_values: int,
-    base_type: BaseType,
+    base_type: BaseType[T],
     endianness: str,
     data: Streamable,
 ) -> Any:
     if number_of_values > 1:
-        value = []
+        value: list[T | None] = []
 
         for n in range(number_of_values):
             # (n_value,) = struct.unpack(
@@ -143,11 +147,12 @@ def _retrieve_value(
             return None
 
         if base_type.value_type is str:
-            value = b"".join(value).decode("utf-8")
-    else:
-        value = base_type.get_value(endianness, data)
+            # NOTE: replace bytes with Buffer when >= 3.12
+            return b"".join(cast(list[bytes], value)).decode("utf-8")
 
-    return value
+        return value
+    else:
+        return base_type.get_value(endianness, data)
 
 
 def read_field(

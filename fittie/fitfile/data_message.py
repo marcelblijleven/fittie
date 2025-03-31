@@ -1,7 +1,7 @@
 from __future__ import annotations  # Added for type hints
 import logging
 from copy import deepcopy
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING, cast
 
 from fittie.fitfile.profile import FieldProfile
 from fittie.fitfile.utils.datastream import Streamable
@@ -72,11 +72,16 @@ def add_subfields_to_fields(
     For example {"product": 22} as fields, becomes {"product": 22, "garmin_product": 22}
     """
 
-    subfield_names = []
+    subfield_names: list[str] = []
+
+    if not field_profile.subfields:
+        return subfield_names
 
     for subfield in field_profile.subfields:
         for reference in subfield.refs:
-            if not (field_value := fields.get(reference["field_name"])):
+            if reference is None:
+                continue
+            if not (field_value := fields.get(cast(str, reference["field_name"]))):
                 continue
 
             if reference["value_number"] == field_value:
@@ -85,9 +90,7 @@ def add_subfields_to_fields(
 
                 if subfield.scale is not None or subfield.offset is not None:
                     field_data = apply_scale_and_offset(
-                        field_data,
-                        subfield.scale,
-                        subfield.offset
+                        field_data, subfield.scale, subfield.offset
                     )
 
                 fields[subfield.field_name] = field_data
@@ -99,13 +102,13 @@ def add_subfields_to_fields(
 
 
 def apply_scale_and_offset(
-    field_data: Any, scale: Optional[int], offset: Optional[int]
+    field_data: Any, scale: int | float | list[int] | None, offset: int | None
 ) -> Any:
     """
     Applies scale and offset to the provided value
 
     Value is divided by scale, default scale is 1
-    Value is subtracted by ofset, default offset is 0
+    Value is subtracted by offset, default offset is 0
 
     Value can be a single value, or list of value
     Scale can be a single value, or list of value
@@ -134,7 +137,7 @@ def decode_data_message(
     message_definition: DefinitionMessage,
     developer_data: dict[int, dict[str, dict[int, FieldDescription]]],
     data: Streamable,
-) -> DataMessage | None:
+) -> DataMessage:
     message_profile = get_message_profile(message_definition.global_message_type)
     fields: dict[str, Any] = {}
     # Field values without scale and offset applied,
@@ -145,14 +148,24 @@ def decode_data_message(
     subfield_names = []
 
     for field in message_definition.field_definitions:
-        message_profile_name = message_profile.name if message_profile else f"unknown_{message_definition.global_message_type}"
-        field_profile = message_profile.fields.get(field.number) if message_profile else None
+        message_profile_name = (
+            message_profile.name
+            if message_profile
+            else f"unknown_{message_definition.global_message_type}"
+        )
+        field_profile = (
+            message_profile.fields.get(field.number) if message_profile else None
+        )
         field_data = read_field(
             field_definition=field,
             endianness=message_definition.endianness,
             data=data,
         )
-        field_name = field_profile.field_name if field_profile else f"{message_profile_name}_unknown_field_{field.number}"
+        field_name = (
+            field_profile.field_name
+            if field_profile
+            else f"{message_profile_name}_unknown_field_{field.number}"
+        )
         fields_raw[field_name] = field_data
 
         if field_profile and (
@@ -172,7 +185,7 @@ def decode_data_message(
 
     # TODO: components, accumulate etc (from field_profile?)
     if fields_with_subfields:
-        for field, field_profile in fields_with_subfields.items():
+        for field_name, field_profile in fields_with_subfields.items():
             subfield_names += add_subfields_to_fields(
                 fields, fields_raw, field_profile, fields_with_components
             )
@@ -189,12 +202,14 @@ def decode_data_message(
             position=data.tell(),
         )
 
-    for field in message_definition.developer_field_definitions:
+    for developer_field in message_definition.developer_field_definitions:
         try:
-            field_description = developer_data[field.data_index]["fields"][field.number]
+            field_description = developer_data[developer_field.data_index]["fields"][
+                developer_field.number
+            ]
         except KeyError:
             raise DecodeException(
-                detail=f"no field description found for field {field}",
+                detail=f"no field description found for field {developer_field}",
                 position=data.tell(),
             )
 
@@ -205,7 +220,7 @@ def decode_data_message(
 
         if not developer_field_definition:
             raise DecodeException(
-                detail=f"no developer field definition found for field {field}",
+                detail=f"no developer field definition found for field {developer_field}",
                 position=data.tell(),
             )
 
