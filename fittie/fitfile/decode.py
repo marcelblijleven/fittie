@@ -4,10 +4,11 @@ import struct
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Optional, Union
+from typing import Any, DefaultDict, Optional, Union, cast
 
 from fittie.fitfile.fitfile import FitFile
 from fittie.fitfile.profile.fit_types import FIT_TYPES
+from fittie.fitfile.util import is_definition_message, is_data_message
 from fittie.fitfile.utils.datastream import DataStream, Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.data_message import DataMessage
@@ -46,22 +47,30 @@ def decode(
             if isinstance(message, DefinitionMessage):
                 local_message_definitions[message.header.local_message_type] = message
             else:
+                index: int
+                local_message_definition = local_message_definitions[
+                    message.header.local_message_type
+                ]
+
                 if (
-                    global_message_type := local_message_definitions.get(
-                        message.header.local_message_type
-                    ).global_message_type
-                ) == 207:
+                    global_message_type := local_message_definition.global_message_type
+                ) is None:
+                    raise DecodeException(
+                        detail="Missing global message type",
+                        position=data.tell(),
+                    )
+                elif global_message_type == 207:
                     # Add developer data index
-                    index = message.fields["developer_data_index"]
+                    index = cast(int, message.fields["developer_data_index"])
                     developer_data[index] = message.fields
                     developer_data[index].update({"fields": {}})
                 elif global_message_type == 206:
                     # Add field descriptions
-                    index = message.fields["developer_data_index"]
+                    index = cast(int, message.fields["developer_data_index"])
                     field = FieldDescription(**message.fields)
-                    developer_data[index]["fields"][
-                        field.field_definition_number
-                    ] = field
+                    developer_data[index]["fields"][field.field_definition_number] = (
+                        field
+                    )
 
                 if global_message_type in MESG_NUMS:
                     messages[MESG_NUMS[global_message_type]].append(message)
@@ -104,19 +113,19 @@ def decode_file_type(source: Union[str, Path, Streamable]) -> str:
 
     with DataStream(source) as data:
         decode_header(data)
-        local_message_definitions = {}
-        developer_data = {}
+        local_message_definitions: dict[int, DefinitionMessage] = {}
+        developer_data: dict = {}
 
         file_id_definition_message_record_header = read_record_header(data)
 
-        file_id_definition_message: DefinitionMessage = read_message(
-            file_id_definition_message_record_header,
-            local_message_definitions.get(
-                file_id_definition_message_record_header.local_message_type
-            ),
+        file_id_definition_message = read_message(
+            local_message_definitions,
             developer_data,
             data,
         )
+
+        if not is_definition_message(file_id_definition_message):
+            raise ValueError("Expected first message to be a definition message")
 
         if file_id_definition_message.global_message_type != 0:
             raise DecodeException(
@@ -131,23 +140,23 @@ def decode_file_type(source: Union[str, Path, Streamable]) -> str:
             file_id_definition_message_record_header.local_message_type
         ] = file_id_definition_message
 
-        file_id_data_message_record_header = read_record_header(data)
-        file_id_data_message: DataMessage = read_message(
-            file_id_data_message_record_header,
-            local_message_definitions.get(
-                file_id_data_message_record_header.local_message_type
-            ),
+        file_id_data_message = read_message(
+            local_message_definitions,
             developer_data,
             data,
         )
+
+        if not is_data_message(file_id_data_message):
+            raise ValueError("Expected second message to be a file_id data message")
+
         fields = file_id_data_message.fields
 
-    file_type_number = fields["type"]
-
-    if not (file_type := FIT_TYPES["file"]["values"].get(file_type_number)):
+    if not (file_type_number := fields["type"]) or not (
+        file_type := FIT_TYPES["file"].values.get(file_type_number)
+    ):
         raise DecodeException(
             detail=f"Invalid file type number received: {file_type_number}",
             position=data.tell(),
         )
 
-    return file_type["value_name"]
+    return file_type.value_name

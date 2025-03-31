@@ -57,7 +57,7 @@ def test_developer_fields(load_fit_file):
 
 
 @pytest.mark.parametrize("load_fit_file", ["fittie_settings_file.fit"], indirect=True)
-def test_gearshifts(load_fit_file):
+def test_settings_file(load_fit_file):
     fitfile = decode(load_fit_file)
     assert fitfile.file_type == "settings"
     assert (user_profile_messages := fitfile.data_messages.get("user_profile")) is not None

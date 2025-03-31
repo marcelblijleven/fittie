@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import BinaryIO
 
 import pytest
 from fittie.fitfile.data_message import DataMessage

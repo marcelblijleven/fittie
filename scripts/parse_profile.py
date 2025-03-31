@@ -1,3 +1,4 @@
+import dataclasses
 import fileinput
 import logging
 import pprint
@@ -8,6 +9,8 @@ from csv import DictReader
 from datetime import datetime
 from typing import Any, Optional, Union
 
+from fittie.fitfile.profile import MessageProfile, FieldProfile, SubField
+from fittie.fitfile.profile.field_type import FieldType, FieldTypeValue
 from fittie.fitfile.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.profile.fit_types import FIT_TYPES
 
@@ -67,7 +70,7 @@ def get_value(row: dict[str, Any], key: str) -> Optional[Union[str, int, list[in
 
 def can_ignore_row(row: dict[str, Any]) -> bool:
     if (
-        field_type := get_value(row, MESSAGES_FIELD_TYPE_COLUMN)
+            field_type := get_value(row, MESSAGES_FIELD_TYPE_COLUMN)
     ) and field_type == field_type.upper():
         return True
     return False
@@ -114,7 +117,7 @@ def get_components(value: Optional[str]) -> Optional[Union[str, list[str]]]:
 
 
 def get_scale(
-    value: Optional[str], units: str
+        value: Optional[str], units: str
 ) -> Optional[Union[int, float, list[int]]]:
     """
     Tries to retrieve scale from the provided value
@@ -159,31 +162,26 @@ def read_messages() -> dict[str, Any]:
         if (message_name := get_value(row, MESSAGES_MESSAGE_NAME_COLUMN)) is not None:
             last_message_name = message_name
             last_message_num = mesg_num_lookup[last_message_name]
-            messages[last_message_num] = {
-                "name": last_message_name,
-                "fields": {},
-                "group": group,
-            }
+            messages[last_message_num] = MessageProfile(last_message_name, {}, group)
         else:
             definition_number = get_value(row, MESSAGES_DEFINITION_NUMBER_COLUMN)
 
             array_value = get_array_value(get_value(row, MESSAGES_ARRAY_COLUMN))
-
-            field = {
-                "field_name": get_value(row, MESSAGES_FIELD_NAME_COLUMN),
-                "field_type": get_value(row, MESSAGES_FIELD_TYPE_COLUMN),
-                "array": array_value,
-                "components": get_components(
+            field = FieldProfile(
+                field_name=get_value(row, MESSAGES_FIELD_NAME_COLUMN),
+                field_type=get_value(row, MESSAGES_FIELD_TYPE_COLUMN),
+                array=array_value,
+                components=get_components(
                     get_value(row, MESSAGES_COMPONENTS_COLUMN)
                 ),
-                "scale": get_scale(
+                scale=get_scale(
                     get_value(row, MESSAGES_SCALE_COLUMN),
                     get_value(row, MESSAGES_UNITS_COLUMN),
                 ),
-                "offset": get_value(row, MESSAGES_OFFSET_COLUMN),
-                "units": get_value(row, MESSAGES_UNITS_COLUMN),
-                "bits": get_value(row, MESSAGES_BITS_COLUMN),
-                "accumulate": get_accumulate(
+                offset=get_value(row, MESSAGES_OFFSET_COLUMN),
+                units=get_value(row, MESSAGES_UNITS_COLUMN),
+                bits=get_value(row, MESSAGES_BITS_COLUMN),
+                accumulate=get_accumulate(
                     get_value(row, MESSAGES_ACCUMULATE_COLUMN)
                 ),
                 # "ref_field_name": get_components(
@@ -192,28 +190,27 @@ def read_messages() -> dict[str, Any]:
                 # "ref_field_value": get_components(
                 #     get_value(row, MESSAGES_REF_FIELD_VALUE_COLUMN)
                 # ),
-                "subfields": [],
-                "comment": get_value(row, MESSAGES_COMMENT_COLUMN),
-            }
+                subfields=[],
+                comment=get_value(row, MESSAGES_COMMENT_COLUMN),
+            )
 
             if definition_number is not None:
                 # Regular field
-                messages[last_message_num]["fields"][definition_number] = field
-                field_map[field["field_name"]] = definition_number, field
+                messages[last_message_num].fields[definition_number] = field
+                field_map[field.field_name] = definition_number, field
                 last_field = field
             else:
-                # Subfield, delete some keys and add it as a subfield to last field
-                del field["accumulate"]
-                del field["subfields"]
-
-                field["ref_field_name"] = get_components(
+                # Subfield
+                field_as_dict = dataclasses.asdict(field)
+                field_as_dict["ref_field_name"] = get_components(
                     get_value(row, MESSAGES_REF_FIELD_NAME_COLUMN)
                 )
-                field["ref_field_value"] = get_components(
+                field_as_dict["ref_field_value"] = get_components(
                     get_value(row, MESSAGES_REF_FIELD_VALUE_COLUMN)
                 )
-
-                field["refs"] = []
+                field_as_dict["refs"] = []
+                del field_as_dict["accumulate"]
+                del field_as_dict["subfields"]
                 #
                 # if isinstance(ref_field_name, list):
                 #     for name, value in zip(ref_field_name, ref_field_value):
@@ -245,7 +242,8 @@ def read_messages() -> dict[str, Any]:
                 #                 "field_name": ref_field_name,
                 #             }
                 #             )
-                last_field["subfields"].append(field)
+
+                last_field.subfields.append(SubField(**field_as_dict))
 
     add_subfield_refs(messages, field_map)
     logger.debug(f"parsing messages finished, {len(messages.keys())} messages parsed")
@@ -255,29 +253,28 @@ def read_messages() -> dict[str, Any]:
 
 def add_subfield_refs(messages: dict, field_map: dict):
     for message_number, message in messages.items():
-        for field_number, field in message["fields"].items():
-            for subfield in field["subfields"]:
-                ref_field_name = subfield["ref_field_name"]
-                ref_field_value = subfield["ref_field_value"]
+        for field_number, field in message.fields.items():
+            for subfield in field.subfields:
+                ref_field_name = subfield.ref_field_name
+                ref_field_value = subfield.ref_field_value
 
                 if isinstance(ref_field_name, str):
-                    subfield["refs"].append(
+                    subfield.refs.append(
                         find_subfield_ref(ref_field_name, ref_field_value, field_map)
                     )
                 else:
                     for name, value in zip(ref_field_name, ref_field_value):
-                        subfield["refs"].append(
+                        subfield.refs.append(
                             find_subfield_ref(name, value, field_map)
                         )
 
 
 def find_subfield_ref(name: str, value: str, field_map: dict) -> dict:
     number, field = field_map[name]
-    fit_type_values = FIT_TYPES[field["field_type"]]["values"]
-    refs = []
+    fit_type_values = FIT_TYPES[field.field_type].values
 
     for value_number, data in fit_type_values.items():
-        if data["value_name"] == value:
+        if data.value_name == value:
             return {
                 "field_number": number,
                 "value_number": value_number,
@@ -289,17 +286,14 @@ def find_subfield_ref(name: str, value: str, field_map: dict) -> dict:
 def read_types() -> dict[str, Any]:
     reader = read_csv("./data/Types.csv")
 
-    types = {}
+    types: dict[str, FieldType] = {}
     last_type_name = None
 
     logger.debug("starting with parsing types")
 
     for row in reader:
         if (type_name := get_value(row, TYPES_TYPE_NAME_COLUMN)) is not None:
-            types[type_name] = {
-                "base_type": get_value(row, TYPES_BASE_TYPE_COLUMN),
-                "values": {},
-            }
+            types[type_name] = FieldType(base_type=get_value(row, TYPES_BASE_TYPE_COLUMN), values={})
             last_type_name = type_name
         else:
             value_name = row[TYPES_VALUE_NAME_COLUMN]
@@ -313,10 +307,7 @@ def read_types() -> dict[str, Any]:
             else:
                 parsed_value = int(value)
 
-            types[last_type_name]["values"][parsed_value] = {
-                "value_name": value_name,
-                "comment": comment,
-            }
+            types[last_type_name].values[parsed_value] = FieldTypeValue(value_name=value_name, comment=comment)
 
     logger.debug(f"parsing types finished, {len(types.keys())} types parsed")
 
@@ -324,27 +315,27 @@ def read_types() -> dict[str, Any]:
 
 
 def write_types_to_file(types: dict[str, Any]) -> None:
-    __write_to_file(types, "../fittie/fitfile/profile/fit_types.py", "FIT_TYPES")
+    import_text = "from fittie.fitfile.profile.field_type import FieldType, FieldTypeValue"
+    __write_to_file(types, "../fittie/fitfile/profile/fit_types.py", "FIT_TYPES", import_text)
 
 
 def write_messages_to_file(messages: dict[str, Any]) -> None:
-    __write_to_file(messages, "../fittie/fitfile/profile/messages.py", "MESSAGES")
+    import_text = "from fittie.fitfile.profile.message_profile import MessageProfile, FieldProfile, SubField"
+    __write_to_file(messages, "../fittie/fitfile/profile/messages.py", "MESSAGES", import_text)
 
 
 def __write_to_file(
-    dict_value: dict[str, Any], filename: str, variable_name: str
+        dict_value: dict[str, Any], filename: str, variable_name: str, import_text: str
 ) -> None:
     with open(filename, "w") as f:
         file_header = get_file_header()
         pretty = pprint.pformat(dict_value, width=WIDTH, compact=True, sort_dicts=False)
-
         f.write(
-            format_str(f"{file_header}\n{variable_name} = {pretty}", mode=FileMode())
+            format_str(f"{file_header}\n{import_text}\n{variable_name} = {pretty}", mode=FileMode())
         )
 
 
 def write_profile_version():
-    import ast
 
     with open("data/version.txt") as file:
         version = file.read().rstrip("\n")

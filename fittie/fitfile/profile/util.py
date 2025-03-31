@@ -1,6 +1,6 @@
 import logging
 from dataclasses import fields
-from functools import lru_cache
+from functools import cache
 
 from fittie.fitfile.profile.message_profile import (
     MessageProfile,
@@ -12,21 +12,18 @@ from fittie.fitfile.profile.messages import MESSAGES
 logger = logging.getLogger("fittie")
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_message_profile(number: int) -> MessageProfile | None:
     """
     A cached helper method to retrieve data from messages.py as a MessageProfile by
     providing the message profile number.
-
-
-    Notes:
-        Replace lru_cache with cache when minimum Python version is 3.9
     """
     if number not in MESSAGES:
         logger.debug(f'unknown message number "{number}"')
         return None
 
-    return dict_to_message_profile(MESSAGES[number])
+    #    return dict_to_message_profile(MESSAGES[number])
+    return MESSAGES[number]
 
 
 def dict_to_message_profile(source: dict) -> MessageProfile:

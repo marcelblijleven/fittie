@@ -53,7 +53,7 @@ class Header:
 
         if self.length == 14:
             self.fmt += "H"  # add additional 2 bytes for CRC
-            values += (self.crc,)
+            values += (self.crc,)  # type: ignore[assignment]
 
         return struct.pack(self.fmt, *values)
 
@@ -84,7 +84,9 @@ def decode_header(data: Streamable) -> Header:
             (crc,) = struct.unpack("H", data.read(2))
             calculated_crc = calculate_crc(header_data)
 
-            if crc != calculated_crc and data.should_calculate_crc:
+            if crc != calculated_crc and (
+                hasattr(data, "should_calculate_crc") and data.should_calculate_crc
+            ):
                 raise DecodeException(
                     detail="invalid crc checksum in file header", position=0
                 )

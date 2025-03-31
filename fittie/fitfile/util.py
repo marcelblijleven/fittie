@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import TypeGuard
+
+from fittie.fitfile.data_message import DataMessage
+from fittie.fitfile.definition_message import DefinitionMessage
 
 FIT_EPOCH = 631065600
 
@@ -35,3 +39,21 @@ def datetime_from_timestamp(timestamp: int) -> datetime:
     dt = datetime.utcfromtimestamp(timestamp + FIT_EPOCH)
     dt = dt.replace(tzinfo=timezone.utc)
     return dt
+
+
+def is_definition_message(
+    message: DefinitionMessage | DataMessage,
+) -> TypeGuard[DefinitionMessage]:
+    """
+    Helper function to check if the provided message is a definition message.
+    """
+
+    return message.header.is_definition_message
+
+
+def is_data_message(message: DefinitionMessage | DataMessage) -> TypeGuard[DataMessage]:
+    """
+    Helper function to check if the provided message is a data message.
+    """
+
+    return not message.header.is_definition_message
