@@ -43,7 +43,12 @@ change_type_map = { "feat" = "Features ✨", "fix" = "Bugfixes 🐛" }
 [dependency-groups]
 dev = [
     "commitizen>=4.4.1",
+    "mypy>=1.15.0",
     "pytest>=8.3.5",
     "pytest-cov>=6.0.0",
     "ruff>=0.11.2",
+]
+docs = [
+    "mkdocs==1.4.2",
+    "mkdocs-material==9.0.15",
 ]

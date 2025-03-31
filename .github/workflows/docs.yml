@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.x
-      - uses: actions/cache@v2
-        with:
-          key: ${{ github.ref }}
-          path: .cache
-      - run: pip install -r requirements_docs.txt
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          version: "0.6.9"
+          python-version: 3.12
+      - run: uv python install
+      - run: uv sync --group docs
       - run: mkdocs gh-deploy --force
