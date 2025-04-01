@@ -6,12 +6,12 @@ import itertools
 from abc import ABC, abstractmethod
 from typing import Any, Optional, Iterable, cast, TypedDict
 
-from fittie.fitfile.profile.messages import MESSAGES
+from fittie.profile.messages import MESSAGES
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.header import Header
-from fittie.fitfile.profile.fit_types import FIT_TYPES
-from fittie.fitfile.profile.mesg_nums import MESG_NUMS
+from fittie.profile.fit_types import FIT_TYPES
+from fittie.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.util import datetime_from_timestamp
 
 

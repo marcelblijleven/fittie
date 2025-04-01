@@ -2,12 +2,12 @@ import logging
 from dataclasses import fields
 from functools import cache
 
-from fittie.fitfile.profile.message_profile import (
+from fittie.profile.message_profile import (
     MessageProfile,
     FieldProfile,
     SubField,
 )
-from fittie.fitfile.profile.messages import MESSAGES
+from fittie.profile.messages import MESSAGES
 
 logger = logging.getLogger("fittie")
 

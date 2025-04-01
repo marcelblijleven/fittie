@@ -2,7 +2,7 @@ from __future__ import annotations  # Added for type hints
 
 from typing import Any
 
-from fittie.fitfile.profile.fit_types import FIT_TYPES
+from fittie.profile.fit_types import FIT_TYPES
 from fittie.fitfile.util import datetime_from_timestamp
 
 

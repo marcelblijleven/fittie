@@ -36,6 +36,7 @@ def datetime_from_timestamp(timestamp: int) -> datetime:
     """
     Create a datetime from a timestamp using the Garmin FIT epoch, in UTC.
     """
+    # NOTE: replace this with datetime.fromtimestamp(ts + epoch, UTC) when minimum version > 3.10
     dt = datetime.utcfromtimestamp(timestamp + FIT_EPOCH)
     dt = dt.replace(tzinfo=timezone.utc)
     return dt

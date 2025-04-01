@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, DefaultDict, Optional, Union, cast
 
 from fittie.fitfile.fitfile import FitFile
-from fittie.fitfile.profile.fit_types import FIT_TYPES
+from fittie.profile.fit_types import FIT_TYPES
 from fittie.fitfile.util import is_definition_message, is_data_message
 from fittie.fitfile.utils.datastream import DataStream, Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
@@ -15,7 +15,7 @@ from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_description import FieldDescription
 from fittie.fitfile.header import decode_header
-from fittie.fitfile.profile.mesg_nums import MESG_NUMS
+from fittie.profile.mesg_nums import MESG_NUMS
 from fittie.fitfile.records import read_record_header, read_message
 
 

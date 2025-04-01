@@ -8,7 +8,7 @@ from fittie.fitfile.data_message import (
     add_subfields_to_fields,
     apply_scale_and_offset,
 )
-from fittie.fitfile.profile.util import get_message_profile
+from fittie.profile.util import get_message_profile
 from fittie.fitfile.records import RecordHeader
 
 
