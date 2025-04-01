@@ -9,14 +9,15 @@ from fittie import decode
 
 
 def main(filename: str) -> None:
-    fitfile = decode(filename)
+    fitfiles = decode(filename)
 
     power_data: list[int] = []
 
-    for data in fitfile(message_type="record", fields=["power"]):
-        # Add only non-zero values to power_data
-        if power := data.get("power"):
-            power_data.append(power)
+    for fitfile in fitfiles:
+        for data in fitfile(message_type="record", fields=["power"]):
+            # Add only non-zero values to power_data
+            if power := data.get("power"):
+                power_data.append(power)
 
     print(get_normalized_power(power_data))
 

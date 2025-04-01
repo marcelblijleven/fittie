@@ -13,7 +13,7 @@ To make it easier, it accepts various argument types as "source".
 
 ```python
 from fittie import decode
-fitfile = decode("/path/to/fit/file.fit")
+fitfiles = decode("/path/to/fit/file.fit")
 ```
 
 By providing a path to a file, the file will be automatically opened in `rb` mode and 
@@ -26,7 +26,7 @@ FileNotFound error will be raised.
 from fittie import decode
 
 with open("/path/to/fit/file.fit", "rb") as file:
-    fitfile = decode(file)
+    fitfiles = decode(file)
 ```
 
 When providing an open file, the mode will be checked. If it is not `rb`, an IOError will
@@ -41,7 +41,7 @@ from io import BytesIO
 from fittie import decode
 
 data = BytesIO(b"example byte string")
-fitfile = decode(data)
+fitfiles = decode(data)
 ```
 
 The Streamable protocol allows variables to be implicitly typed as a Streamable when it
@@ -57,12 +57,12 @@ decoding faster (usually around 2x faster), the crc check can be disabled.
 > ⚠️ Disabling the crc check means the decoder can't verify if all the data is correct.
 
 ```python
-fitfile = decode("/path/to/fit/file.fit", calculate_crc=False)
+fitfiles = decode("/path/to/fit/file.fit", calculate_crc=False)
 ```
 
 ## FitFile
 
-The return type of `decode` is the `FitFile` class. This class exposes several methods
+The return type of `decode` is an Iterable of the `FitFile` class. This class exposes several methods
 and properties which the user can access, like a collection of list of `DataMessage`.
 
 More information about iteration over these lists of `DataMessage` can be found [here](iterating_data.md).

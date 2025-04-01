@@ -12,22 +12,23 @@ def main(filename: str):
     data of a direct iteration over the fitfile.
     """
 
-    fitfile = decode(filename)
+    fitfiles = decode(filename)
 
     # Get all fields from all "session" messages
-    for data in fitfile(message_type="session"):
-        print(data)
+    for fitfile in fitfiles:
+        for data in fitfile(message_type="session"):
+            print(data)
 
-    # Get only certain field data from all "record" messages
-    for data in fitfile(
-        message_type="record", fields=[
-            "timestamp", 
-            "heart_rate", 
-            "power", 
-            "distance"
-        ]
-    ):
-        print(data)
+        # Get only certain field data from all "record" messages
+        for data in fitfile(
+            message_type="record", fields=[
+                "timestamp", 
+                "heart_rate", 
+                "power", 
+                "distance"
+            ]
+        ):
+            print(data)
 
 
 if __name__ == "__main__":

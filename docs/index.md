@@ -17,17 +17,19 @@ pip install fittie
 ## Quick start
 
 The easiest way to get started with Fittie, is by decoding a FIT file using the `decode`
-function and iterating over the parsed data.
+function and iterating over the parsed data. Decode returns an iterable of FitFile because one FIT file 
+can contain multiple chained files inside.
 
 ```python
 from fittie import decode
 
 
 def main(filename: str):
-    fitfile = decode(filename)
+    fitfiles = decode(filename)
     
-    for data in fitfile:
-        print(data)
+    for fitfile in fitfiles:
+        for data in fitfile:
+            print(data)
     
         
 if __name__ == "__main__":

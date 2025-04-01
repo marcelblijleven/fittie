@@ -4,7 +4,7 @@ import struct
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Optional, Union, cast
+from typing import Any, DefaultDict, Union, cast
 
 from fittie.fitfile.fitfile import FitFile
 from fittie.profile.fit_types import FIT_TYPES
@@ -20,82 +20,109 @@ from fittie.fitfile.records import read_record_header, read_message
 
 
 def decode(
-    source: Union[str, Path, Streamable], calculate_crc: Optional[bool] = True
-) -> FitFile:
+    source: Union[str, Path, Streamable], calculate_crc: bool = True
+) -> list[FitFile]:
     """
-    Decode a fit file
+    Decode a fit file into an Iterable of FitFile.
+
+    A fit file can contain one or more chained fit files inside, which is
+    why decode will return as an iterable, even if there is only one fitfile.
+    This is a breaking change over earlier versions of fittie (<1.0.0).
+
+    Args:
+        source: a file name, BytesIO or BufferIO.
+        calculate_crc: whether to calculate the CRC
+
+    Returns:
+        Iterable[FitFile]: one or more instances of FitFile
     """
+
+    fitfiles: list[FitFile] = []
+
     with DataStream(source) as data:
-        if not calculate_crc:
-            # Don't calculate checksum
-            data.should_calculate_crc = False
+        _decode_next = True
 
-        header = decode_header(data)
+        while _decode_next:
+            total_size = sum([f.header.length + f.header.data_size for f in fitfiles])
+            data.reset_crc()  # Reset the crc calculation here in case of chained fit files.
 
-        local_message_definitions: dict[int, DefinitionMessage] = {}
-        developer_data: dict[int, dict[str, Any]] = {}
-        messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
+            try:
+                if not calculate_crc:
+                    # Don't calculate checksum
+                    data.should_calculate_crc = False
 
-        while data.tell() < header.length + header.data_size:
-            # Read message
-            message = read_message(
-                local_message_definitions,
-                developer_data,
-                data,
-            )
+                header = decode_header(data)
 
-            if isinstance(message, DefinitionMessage):
-                local_message_definitions[message.header.local_message_type] = message
-            else:
-                index: int
-                local_message_definition = local_message_definitions[
-                    message.header.local_message_type
-                ]
+                local_message_definitions: dict[int, DefinitionMessage] = {}
+                developer_data: dict[int, dict[str, Any]] = {}
+                messages: DefaultDict[str, list[DataMessage]] = defaultdict(list)
 
-                if (
-                    global_message_type := local_message_definition.global_message_type
-                ) is None:
+                while data.tell() < header.length + header.data_size + total_size:
+                    # Read message
+                    message = read_message(
+                        local_message_definitions,
+                        developer_data,
+                        data,
+                    )
+
+                    if isinstance(message, DefinitionMessage):
+                        local_message_definitions[message.header.local_message_type] = (
+                            message
+                        )
+                    else:
+                        index: int
+                        local_message_definition = local_message_definitions[
+                            message.header.local_message_type
+                        ]
+
+                        if (
+                            global_message_type
+                            := local_message_definition.global_message_type
+                        ) is None:
+                            raise DecodeException(
+                                detail="Missing global message type",
+                                position=data.tell(),
+                            )
+                        elif global_message_type == 207:
+                            # Add developer data index
+                            index = cast(int, message.fields["developer_data_index"])
+                            developer_data[index] = message.fields
+                            developer_data[index].update({"fields": {}})
+                        elif global_message_type == 206:
+                            # Add field descriptions
+                            index = cast(int, message.fields["developer_data_index"])
+                            field = FieldDescription(**message.fields)
+                            developer_data[index]["fields"][
+                                field.field_definition_number
+                            ] = field
+
+                        if global_message_type in MESG_NUMS:
+                            messages[MESG_NUMS[global_message_type]].append(message)
+                        else:
+                            messages[f"unknown_{global_message_type}"].append(message)
+
+                calculated_crc = data.calculated_crc
+                (crc,) = struct.unpack("H", data.read(2))
+
+                if calculate_crc and crc != calculated_crc:
                     raise DecodeException(
-                        detail="Missing global message type",
+                        detail=(
+                            "the calculated crc does not match the crc at the end of the file"
+                        ),
                         position=data.tell(),
                     )
-                elif global_message_type == 207:
-                    # Add developer data index
-                    index = cast(int, message.fields["developer_data_index"])
-                    developer_data[index] = message.fields
-                    developer_data[index].update({"fields": {}})
-                elif global_message_type == 206:
-                    # Add field descriptions
-                    index = cast(int, message.fields["developer_data_index"])
-                    field = FieldDescription(**message.fields)
-                    developer_data[index]["fields"][field.field_definition_number] = (
-                        field
-                    )
 
-                if global_message_type in MESG_NUMS:
-                    messages[MESG_NUMS[global_message_type]].append(message)
-                else:
-                    messages[f"unknown_{global_message_type}"].append(message)
+                fitfile = FitFile(
+                    header=header,
+                    data_messages=messages,
+                    local_message_definitions=local_message_definitions,
+                    developer_data=developer_data,
+                )
+                fitfiles.append(fitfile)
+            except EOFError:
+                _decode_next = False
 
-        calculated_crc = data.calculated_crc
-        (crc,) = struct.unpack("H", data.read(2))
-
-        if calculate_crc and crc != calculated_crc:
-            raise DecodeException(
-                detail=(
-                    "the calculated crc does not match the crc at the end of the file"
-                ),
-                position=data.tell(),
-            )
-
-    fitfile = FitFile(
-        header=header,
-        data_messages=messages,
-        local_message_definitions=local_message_definitions,
-        developer_data=developer_data,
-    )
-
-    return fitfile
+    return fitfiles
 
 
 def decode_file_type(source: Union[str, Path, Streamable]) -> str:

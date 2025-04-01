@@ -16,9 +16,6 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
-dependencies = [
-    "pydantic>=2.10.6",
-]
 
 [tool.ruff]
 line-length = 88
@@ -37,7 +34,7 @@ version_files = ["pyproject.toml", "fittie/__init__.py"]
 update_changelog_on_bump = true
 tag_format = "v$major.$minor.$patch$prerelease"
 annotated_tag = true
-major_version_zero = true                                         # Disable this when ready to go to 1.0.0
+major_version_zero = false
 change_type_map = { "feat" = "Features ✨", "fix" = "Bugfixes 🐛" }
 
 [dependency-groups]

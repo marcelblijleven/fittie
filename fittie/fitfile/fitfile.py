@@ -158,11 +158,18 @@ class FitFile(_IterableMixin):
         fields: dict[str, str | None] = {}
 
         for definition_message in self.local_message_definitions.values():
-            _fields = MESSAGES[definition_message.global_message_type].fields
-
-            for field_definition in definition_message.field_definitions:
-                field = _fields[field_definition.number]
-                fields[field.field_name] = field.units
+            if (message_profile := MESSAGES.get(definition_message.global_message_type)) is None:
+                for field_definition in definition_message.field_definitions:
+                    field_name = f"unknown_field_{field_definition.number}"
+                    fields[field_name] = ""
+            else:
+                for field_definition in definition_message.field_definitions:
+                    if field_definition.number not in message_profile.fields:
+                        field_name = f"unknown_field_{field_definition.number}"
+                        fields[field_name] = ""
+                    else:
+                        field = message_profile.fields[field_definition.number]
+                        fields[field.field_name] = field.units
 
         return fields
 
