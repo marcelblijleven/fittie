@@ -1,6 +1,6 @@
 [project]
 name = "fittie"
-version = "0.10.0"
+version = "1.0.0"
 description = "FIT file tool"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,7 +29,7 @@ omit = [
 ]
 
 [tool.commitizen]
-version = "0.10.0"
+version = "1.0.0"
 version_files = ["pyproject.toml", "fittie/__init__.py"]
 update_changelog_on_bump = true
 tag_format = "v$major.$minor.$patch$prerelease"

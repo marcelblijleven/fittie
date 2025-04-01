@@ -1,3 +1,9 @@
+## v1.0.0 (2025-04-01)
+
+### Features ✨
+
+- add support for chained fitfiles (#32)
+
 ## v0.10.0 (2025-03-31)
 
 ### Features ✨
