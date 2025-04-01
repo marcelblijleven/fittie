@@ -6,7 +6,7 @@ from typing import Any, cast, TypeVar
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.field_description import FieldDescription
-from fittie.fitfile.profile.base_types import BaseType, BASE_TYPES
+from fittie.profile.base_types import BaseType, BASE_TYPES
 
 
 T = TypeVar("T")

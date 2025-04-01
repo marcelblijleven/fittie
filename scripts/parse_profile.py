@@ -9,10 +9,10 @@ from csv import DictReader
 from datetime import datetime
 from typing import Any, Optional, Union
 
-from fittie.fitfile.profile import MessageProfile, FieldProfile, SubField
-from fittie.fitfile.profile.field_type import FieldType, FieldTypeValue
-from fittie.fitfile.profile.mesg_nums import MESG_NUMS
-from fittie.fitfile.profile.fit_types import FIT_TYPES
+from fittie.profile import MessageProfile, FieldProfile, SubField
+from fittie.profile.field_type import FieldType, FieldTypeValue
+from fittie.profile.mesg_nums import MESG_NUMS
+from fittie.profile.fit_types import FIT_TYPES
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -315,13 +315,13 @@ def read_types() -> dict[str, Any]:
 
 
 def write_types_to_file(types: dict[str, Any]) -> None:
-    import_text = "from fittie.fitfile.profile.field_type import FieldType, FieldTypeValue"
-    __write_to_file(types, "../fittie/fitfile/profile/fit_types.py", "FIT_TYPES", import_text)
+    import_text = "from fittie.profile.field_type import FieldType, FieldTypeValue"
+    __write_to_file(types, "../fittie/profile/fit_types.py", "FIT_TYPES", import_text)
 
 
 def write_messages_to_file(messages: dict[str, Any]) -> None:
-    import_text = "from fittie.fitfile.profile.message_profile import MessageProfile, FieldProfile, SubField"
-    __write_to_file(messages, "../fittie/fitfile/profile/messages.py", "MESSAGES", import_text)
+    import_text = "from fittie.profile.message_profile import MessageProfile, FieldProfile, SubField"
+    __write_to_file(messages, "../fittie/profile/messages.py", "MESSAGES", import_text)
 
 
 def __write_to_file(

@@ -3,13 +3,13 @@ import logging
 from copy import deepcopy
 from typing import Any, Optional, TYPE_CHECKING, cast
 
-from fittie.fitfile.profile import FieldProfile
+from fittie.profile import FieldProfile
 from fittie.fitfile.utils.datastream import Streamable
 from fittie.fitfile.utils.exceptions import DecodeException
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_definitions import read_field, read_developer_field
 from fittie.fitfile.field_description import FieldDescription
-from fittie.fitfile.profile.util import get_message_profile
+from fittie.profile.util import get_message_profile
 
 logger = logging.getLogger("fittie")
 

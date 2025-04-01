@@ -1,6 +1,6 @@
-from fittie.fitfile.profile import MessageProfile, FieldProfile, SubField
-from fittie.fitfile.profile.messages import MESSAGES
-from fittie.fitfile.profile.util import (
+from fittie.profile import MessageProfile, FieldProfile, SubField
+from fittie.profile.messages import MESSAGES
+from fittie.profile.util import (
     get_message_profile,
     dict_to_message_profile,
     dict_to_field_profile,

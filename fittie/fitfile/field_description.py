@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fittie.fitfile.profile.base_types import BaseType, BASE_TYPES
+from fittie.profile.base_types import BaseType, BASE_TYPES
 
 
 class FieldDescription:

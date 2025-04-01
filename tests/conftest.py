@@ -6,7 +6,7 @@ from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_definitions import FieldDefinition
 from fittie.fitfile.fitfile import FitFile
 from fittie.fitfile.header import Header
-from fittie.fitfile.profile.base_types import BASE_TYPES
+from fittie.profile.base_types import BASE_TYPES
 from fittie.fitfile.records import RecordHeader
 from fittie.fitfile.utils.endianness import Endianness
 
