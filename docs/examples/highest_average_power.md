@@ -9,12 +9,13 @@ from fittie import decode
 
 
 def main(filename: str) -> None:
-    fitfile = decode(filename)
+    fitfiles = decode(filename)
 
     power_data: list[int] = []
 
-    for data in fitfile(message_type="record", fields=["power"]):
-        power_data.append(data["power"])
+    for fitfile in fitfiles:
+        for data in fitfile(message_type="record", fields=["power"]):
+            power_data.append(data["power"])
 
     windows = {
         "5 seconds": 5,

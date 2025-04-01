@@ -10,8 +10,8 @@ README.md files.
 > use of this package.
 
 The `parse_profile.py` script takes the Profile information from the Garmin FIT SDK
-and generates Python dictionaries at `fittie/fitfile/profile/messages.py` and 
-`fittie/fitfile/profile/fit_types.py`.
+and generates Python dictionaries at `fittie/profile/messages.py` and 
+`fittie/profile/fit_types.py`.
 
 Download the Garmin FIT SDK release from https://developer.garmin.com/fit/download/,
 open the Profile.xlsx and save the tabs to `Types.csv` and `Messages.csv`. Place these

@@ -10,6 +10,8 @@ from fittie.profile.base_types import BASE_TYPES
 from fittie.fitfile.records import RecordHeader
 from fittie.fitfile.utils.endianness import Endianness
 
+DATA_DIR = Path(__file__).parent / "data"
+
 
 @pytest.fixture
 def small_fitfile():
@@ -123,15 +125,14 @@ def record_5_definition_message():
 
 
 @pytest.fixture
-def load_fit_file(request):
-    if not request.param:
-        raise ValueError(
-            "no filename provided, decorate the test function with "
-            '@pytest.mark.parametrize("fixture name",[value], indirect=True)'
-        )
+def data_dir() -> Path:
+    return DATA_DIR
 
-    parent_dir = Path(__file__).parent
-    filepath = parent_dir / "data" / request.param
 
-    with open(filepath, "rb") as file:
-        yield file
+@pytest.fixture
+def load_fit_file():
+    def _load_file(path: str | Path):
+        with open(path, "rb") as file:
+            yield file
+
+    return _load_file

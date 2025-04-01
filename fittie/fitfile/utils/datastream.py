@@ -65,6 +65,9 @@ class DataStream:
 
         value = self._data.read(size)
 
+        if len(value) != size:
+            raise EOFError
+
         for idx in range(0, size):
             self._calculated_crc = apply_crc(self._calculated_crc, value[idx])
         return value
