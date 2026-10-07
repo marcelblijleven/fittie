@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fittie.fitfile.util import rollover_timestamp, datetime_from_timestamp
+from fittie.fitfile.util import datetime_from_timestamp, rollover_timestamp
 
 
 def test_rollover_timestamp():
@@ -31,3 +31,7 @@ def test_datetime_from_timestamp():
     assert datetime_from_timestamp(1046119077) == datetime(
         2023, 2, 23, 20, 37, 57, tzinfo=timezone.utc
     )
+
+
+def test_rollover_uses_all_five_offset_bits():
+    assert rollover_timestamp(31, 16) == 48

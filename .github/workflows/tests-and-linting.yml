@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
     - uses: actions/checkout@v4
@@ -21,17 +21,39 @@ jobs:
     - name: Install uv and set the python version
       uses: astral-sh/setup-uv@v5
       with:
-        version: "0.6.9"
+        version: "latest"
         python-version: ${{ matrix.python-version }}
 
     - name: Set up Python ${{ matrix.python-version }}
       run: uv python install
 
     - name: Install dependencies
-      run: uv sync --all-extras --dev
+      run: uv sync --locked --dev
     - name: Run mypy
-      run: uv run mypy fittie
+      run: uv run --locked mypy fittie
     - name: Lint with ruff
-      run: uv run ruff check fittie
+      run: uv run --locked ruff check .
+    - name: Check formatting
+      run: uv run --locked ruff format --check .
+    - name: Build package
+      run: uv build
     - name: Test with pytest
-      run: uv run pytest
+      run: uv run --locked pytest
+    - name: Verify pinned Garmin workbook and generated profile
+      if: matrix.python-version == '3.14'
+      run: |
+        uv run --locked python - <<'PY'
+        import hashlib
+        import json
+        import pathlib
+        import urllib.request
+
+        source = json.loads(pathlib.Path("fittie/profile/source.json").read_text())
+        workbook = urllib.request.urlopen(source["source_url"], timeout=60).read()
+        if hashlib.sha256(workbook).hexdigest() != source["sha256"]:
+            raise SystemExit("Garmin workbook checksum mismatch")
+        pathlib.Path("scripts/data/Profile.xlsx").write_bytes(workbook)
+        PY
+        uv run --locked python scripts/parse_profile.py scripts/data/Profile.xlsx --version 21.217.0 --check
+        uv run --locked --with garmin-fit-sdk==21.217.0 python scripts/compare_profile.py
+        uv run --locked --with garmin-fit-sdk==21.217.0 python scripts/compare_sdk.py

@@ -1,17 +1,17 @@
 from __future__ import annotations  # Added for type hints
-import logging
+
+from collections.abc import MutableMapping
 from copy import deepcopy
-from typing import Any, Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
-from fittie.profile import FieldProfile
-from fittie.fitfile.utils.datastream import Streamable
-from fittie.fitfile.utils.exceptions import DecodeException
+from fittie.fitfile.components import Accumulators
 from fittie.fitfile.definition_message import DefinitionMessage
-from fittie.fitfile.field_definitions import read_field, read_developer_field
+from fittie.fitfile.developer_values import DeveloperValues
+from fittie.fitfile.field_definitions import read_developer_field
 from fittie.fitfile.field_description import FieldDescription
-from fittie.profile.util import get_message_profile
-
-logger = logging.getLogger("fittie")
+from fittie.fitfile.message_decoder import MessageDecoder
+from fittie.fitfile.utils.datastream import Streamable
+from fittie.profile import FieldProfile
 
 if TYPE_CHECKING:
     from fittie.fitfile.records import RecordHeader
@@ -29,14 +29,26 @@ class DataMessage:
     Related DefinitionMessages and DataMessages share a local message type
     """
 
-    header: "RecordHeader"
-    fields: dict[str, Optional[Any]]
+    __slots__ = ("header", "fields", "definition", "developer_fields", "native_fields")
 
-    def __init__(self, header: "RecordHeader", fields: dict[str, Optional[Any]]):
+    header: RecordHeader
+    fields: dict[str, Any | None]
+
+    def __init__(
+        self,
+        header: RecordHeader,
+        fields: dict[str, Any | None],
+        definition: DefinitionMessage | None = None,
+        developer_fields: MutableMapping[tuple[int, int], Any] | None = None,
+        native_fields: dict | None = None,
+    ):
         self.header = header
         self.fields = fields
+        self.definition = definition
+        self.developer_fields = developer_fields
+        self.native_fields = native_fields
 
-    def get_field(self, field_name: str) -> Optional[Any]:
+    def get_field(self, field_name: str) -> Any | None:
         """Retrieve a field by key from fields"""
         return self.fields.get(field_name, None)
 
@@ -81,7 +93,9 @@ def add_subfields_to_fields(
         for reference in subfield.refs:
             if reference is None:
                 continue
-            if not (field_value := fields.get(cast(str, reference["field_name"]))):
+            if (
+                field_value := fields_raw.get(cast(str, reference["field_name"]))
+            ) is None:
                 continue
 
             if reference["value_number"] == field_value:
@@ -102,7 +116,9 @@ def add_subfields_to_fields(
 
 
 def apply_scale_and_offset(
-    field_data: Any, scale: int | float | list[int] | None, offset: int | None
+    field_data: Any,
+    scale: int | float | list[int | float] | None,
+    offset: int | float | None,
 ) -> Any:
     """
     Applies scale and offset to the provided value
@@ -133,104 +149,46 @@ def apply_scale_and_offset(
 
 
 def decode_data_message(
-    header: "RecordHeader",
+    header: RecordHeader,
     message_definition: DefinitionMessage,
     developer_data: dict[int, dict[str, dict[int, FieldDescription]]],
     data: Streamable,
+    accumulators: Accumulators | None = None,
 ) -> DataMessage:
-    message_profile = get_message_profile(message_definition.global_message_type)
-    fields: dict[str, Any] = {}
-    # Field values without scale and offset applied,
-    # used for subfields
-    fields_raw: dict[str, Any] = {}
-    fields_with_subfields: dict[str, FieldProfile] = {}
-    fields_with_components: list[str] = []
-    subfield_names = []
+    if accumulators is None:
+        accumulators = {}
+    compressed = header.is_compressed_timestamp_message
+    plan = message_definition._decoders.get(compressed)
+    if plan is None:
+        plan = MessageDecoder(message_definition, compressed)
+        message_definition._decoders[compressed] = plan
+    fields = plan.read(data, accumulators)
 
-    for field in message_definition.field_definitions:
-        message_profile_name = (
-            message_profile.name
-            if message_profile
-            else f"unknown_{message_definition.global_message_type}"
-        )
-        field_profile = (
-            message_profile.fields.get(field.number) if message_profile else None
-        )
-        field_data = read_field(
-            field_definition=field,
-            endianness=message_definition.endianness,
-            data=data,
-        )
-        field_name = (
-            field_profile.field_name
-            if field_profile
-            else f"{message_profile_name}_unknown_field_{field.number}"
-        )
-        fields_raw[field_name] = field_data
-
-        if field_profile and (
-            field_profile.scale is not None or field_profile.offset is not None
-        ):
-            field_data = apply_scale_and_offset(
-                field_data, scale=field_profile.scale, offset=field_profile.offset
+    developers = None
+    if message_definition.developer_field_definitions:
+        values = []
+        for dev in message_definition.developer_field_definitions:
+            description = (
+                developer_data.get(dev.data_index, {}).get("fields", {}).get(dev.number)
             )
-
-        fields[field_name] = field_data
-
-        if field_profile:
-            if field_profile.has_subfields:
-                fields_with_subfields[field_name] = field_profile
-            if field_profile.has_components:
-                fields_with_components.append(field_name)
-
-    # TODO: components, accumulate etc (from field_profile?)
-    if fields_with_subfields:
-        for field_name, field_profile in fields_with_subfields.items():
-            subfield_names += add_subfields_to_fields(
-                fields, fields_raw, field_profile, fields_with_components
+            if description is None:
+                value = data.read(dev.size)
+                name = f"developer_{dev.data_index}_{dev.number}"
+            else:
+                value = read_developer_field(
+                    description, dev, message_definition.endianness, data
+                )
+                name = description.field_name
+            values.append(value)
+            # Keep native values and both developers when names collide.
+            key = (
+                name
+                if name not in fields
+                else f"developer_{dev.data_index}_{dev.number}_{name}"
             )
-    if fields_with_components:
-        logger.debug(f"components not implemented yet, {fields_with_components=}")
+            while key in fields:
+                key = "_" + key
+            fields[key] = value
+        developers = DeveloperValues(message_definition.developer_keys, values)
 
-    # if field_profile.accumulate:
-    #     ...
-
-    if message_definition.developer_field_definitions and not developer_data:
-        raise DecodeException(
-            detail="definition message contains developer fields, "
-            "but no field descriptions are provided",
-            position=data.tell(),
-        )
-
-    for developer_field in message_definition.developer_field_definitions:
-        try:
-            field_description = developer_data[developer_field.data_index]["fields"][
-                developer_field.number
-            ]
-        except KeyError:
-            raise DecodeException(
-                detail=f"no field description found for field {developer_field}",
-                position=data.tell(),
-            )
-
-        developer_field_definition = message_definition.get_developer_field_definition(
-            data_index=field_description.developer_data_index,
-            number=field_description.field_definition_number,
-        )
-
-        if not developer_field_definition:
-            raise DecodeException(
-                detail=f"no developer field definition found for field {developer_field}",
-                position=data.tell(),
-            )
-
-        field_data = read_developer_field(
-            field_description=field_description,
-            field_definition=developer_field_definition,
-            endianness=message_definition.endianness,
-            data=data,
-        )
-
-        fields[field_description.field_name] = field_data
-
-    return DataMessage(header=header, fields=fields)
+    return DataMessage(header, fields, message_definition, developers, plan.last_native)

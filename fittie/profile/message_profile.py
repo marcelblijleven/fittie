@@ -9,8 +9,8 @@ class SubField:
     refs: list[dict[str, int | str] | None]
     array: Literal[False] | Literal["N"] | int | None = None
     components: str | list[str] | None = None
-    scale: float | int | list[int] | None = None
-    offset: int | None = None
+    scale: float | int | list[int | float] | None = None
+    offset: int | float | None = None
     units: str | None = None
     bits: int | str | None = None
     accumulate: int | list[int] | None = None
@@ -21,7 +21,7 @@ class SubField:
     @property
     def is_array(self) -> bool:
         """Check whether the field is an array"""
-        return self.array is not None
+        return bool(self.array)
 
     @property
     def has_components(self) -> bool:
@@ -35,8 +35,8 @@ class FieldProfile:
     field_type: str
     array: Literal[False] | Literal["N"] | int | None = None
     components: str | list[str] | None = None
-    scale: float | int | list[int] | None = None
-    offset: int | None = None
+    scale: float | int | list[int | float] | None = None
+    offset: int | float | None = None
     units: str | None = None
     bits: int | str | None = None
     accumulate: int | list[int] | None = None
@@ -46,7 +46,7 @@ class FieldProfile:
     @property
     def is_array(self) -> bool:
         """Check whether the field is an array"""
-        return self.array is not None
+        return bool(self.array)
 
     @property
     def has_components(self) -> bool:

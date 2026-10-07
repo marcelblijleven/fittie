@@ -1,4 +1,5 @@
 from io import BytesIO
+
 from fittie.fitfile.records import read_record_header
 
 

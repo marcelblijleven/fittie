@@ -4,12 +4,12 @@ from io import BytesIO
 import pytest
 
 from fittie.fitfile.data_message import (
-    decode_data_message,
     add_subfields_to_fields,
     apply_scale_and_offset,
+    decode_data_message,
 )
-from fittie.profile.util import get_message_profile
 from fittie.fitfile.records import RecordHeader
+from fittie.profile.util import get_message_profile
 
 
 def test_decode_data_message(record_1_definition_message):
@@ -93,3 +93,20 @@ def test_add_subfields_to_fields():
 )
 def test_apply_scale_and_offset(value, scale, offset, expected):
     assert apply_scale_and_offset(value, scale, offset) == expected
+
+
+def test_subfield_reference_can_be_zero():
+    from fittie.profile import FieldProfile, SubField
+
+    profile = FieldProfile(
+        field_name="data",
+        field_type="uint32",
+        subfields=[
+            SubField(
+                "timer_data", "uint32", [{"field_name": "event", "value_number": 0}]
+            )
+        ],
+    )
+    fields = {"event": 0, "data": 42}
+    assert add_subfields_to_fields(fields, fields.copy(), profile, []) == ["timer_data"]
+    assert fields["timer_data"] == 42

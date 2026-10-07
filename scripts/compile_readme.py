@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 import re
-
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -67,14 +66,14 @@ def add_extra_heading_level(lines: list[str]) -> str:
 
 def read_file_text(path: Path) -> str:
     """Reads file to str"""
-    with open(path, "r") as file:
+    with open(path) as file:
         text = file.read()
     return text
 
 
 def read_file_lines(path: Path) -> list[str]:
     """Reads file to list of str"""
-    with open(path, "r") as file:
+    with open(path) as file:
         lines = file.readlines()
     return lines
 

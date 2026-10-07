@@ -26,15 +26,14 @@ from fittie import decode
 
 def main(filename: str):
     fitfiles = decode(filename)
-    
+
     for fitfile in fitfiles:
         for data in fitfile:
             print(data)
-    
-        
+
+
 if __name__ == "__main__":
     main(filename="/path/to/fit/file.fit")
-
 ```
 
 Example output for the example above would be:

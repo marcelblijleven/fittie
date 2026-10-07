@@ -1,3 +1,28 @@
+## Unreleased
+
+- Add profile-aware FIT 2.0 encoding, definition reuse, developer fields, and chained output.
+- Preserve wire order and original definitions; add streaming and processing callbacks.
+- Support string arrays and string component targets, all matching subfields, optional raw values and enum/date conversion, and HR merging.
+- Retain opaque unknown fields and developer identities; add explicit native overrides and common file-type validation.
+- Share immutable headers and repeated definitions, keeping the default decode path fast.
+- Add full-value Garmin interoperability checks and encoder regression tests.
+
+- Regenerate Garmin profile 21.217.0: 125 messages, 1,566 fields, 163 subfields, and 215 types.
+- Replace CSV generation with deterministic workbook parsing, same-source enums/references, source provenance, and a check mode.
+- Validate generated metadata against Garmin’s matching Python SDK; retain documented workbook differences.
+
+- Expand native numeric components and subfields, including nested and array components.
+- Accumulate rolling counters across local definitions, with exact scaling and full-value resets.
+- Compile binary message plans, reduce record allocations, and accelerate CRC and stream-position tracking.
+- Add repeatable performance benchmarks and an optional Garmin component comparison.
+
+- Target Python 3.14 for development; retain support and CI for Python 3.10–3.14.
+- Add explicit package builds, modern dependency groups, refreshed tooling, and typing metadata.
+- Decode compressed timestamps; fix chained-file boundaries, CRC handling, and truncation errors.
+- Fix zero-valued arrays, invalid floats, scalar strings, and file-type detection.
+- Keep caller-provided streams open and modernize UTC datetime conversion.
+- Document remaining FIT coverage gaps against Garmin SDK 21.217.0.
+
 ## v1.0.0 (2025-04-01)
 
 ### Features ✨

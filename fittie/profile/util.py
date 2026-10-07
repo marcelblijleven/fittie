@@ -1,10 +1,9 @@
 import logging
-from dataclasses import fields
 from functools import cache
 
 from fittie.profile.message_profile import (
-    MessageProfile,
     FieldProfile,
+    MessageProfile,
     SubField,
 )
 from fittie.profile.messages import MESSAGES
@@ -30,39 +29,25 @@ def dict_to_message_profile(source: dict) -> MessageProfile:
     """
     Converts a nested dict to a MessageProfile, with FieldProfiles
     """
-    raw = {}
-    field_types = {f.name: f.type for f in fields(MessageProfile)}
-
-    for key, value in source.items():
-        if field_types[key] != "dict[int, FieldProfile]":
-            raw[key] = value
-            continue
-
-        raw_fields = {}
-        for field_key, field_value in value.items():
-            raw_fields[field_key] = dict_to_field_profile(field_value)
-
-        raw[key] = raw_fields
-
-    return MessageProfile(**raw)
+    return MessageProfile(
+        **{
+            **source,
+            "fields": {
+                int(number): dict_to_field_profile(field)
+                for number, field in source["fields"].items()
+            },
+        }
+    )
 
 
 def dict_to_field_profile(source: dict) -> FieldProfile:
-    """
-    Converts a nested dict to a FieldProfile, with SubFields
-    """
-    raw = {}
-    field_types = {f.name: f.type for f in fields(FieldProfile)}
-
-    for key, value in source.items():
-        if field_types[key] != "Optional[list[SubField]]":
-            raw[key] = value
-            continue
-
-        raw_subfields = []
-        for subfield in value:
-            raw_subfields.append(SubField(**subfield))
-
-        raw[key] = raw_subfields
-
-    return FieldProfile(**raw)
+    """Convert a field and its nested subfields without inspecting annotations."""
+    subfields = source.get("subfields")
+    return FieldProfile(
+        **{
+            **source,
+            "subfields": [SubField(**subfield) for subfield in subfields]
+            if subfields is not None
+            else None,
+        }
+    )

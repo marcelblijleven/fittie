@@ -18,33 +18,30 @@ TABLE = (
 )
 
 
+def _table_entry(value: int) -> int:
+    for _ in range(8):
+        value = (value >> 1) ^ (0xA001 if value & 1 else 0)
+    return value
+
+
+BYTE_TABLE = tuple(_table_entry(value) for value in range(256))
+
+
 def apply_crc(crc: int, value: int) -> int:
-    """
-    Applies the crc computation on the provided value and returns it
-    """
-    # Compute checksum of lower four bits of byte
-    tmp = TABLE[crc & 0xF]
-    crc = (crc >> 4) & 0x0FFF
-    crc = crc ^ tmp ^ TABLE[value & 0xF]
-
-    # Compute checksum of upper four bits of byte
-    tmp = TABLE[crc & 0xF]
-    crc = (crc >> 4) & 0x0FFF
-    crc = crc ^ tmp ^ TABLE[(value >> 4) & 0xF]
-
-    return crc
+    """Update FIT's CRC-16 using a precomputed byte table."""
+    return (crc >> 8) ^ BYTE_TABLE[(crc ^ value) & 0xFF]
 
 
-def calculate_crc(data: bytes) -> int:
+def calculate_crc(data: bytes, initial_crc: int = 0) -> int:
     """
     Calculates crc checksum for the entire provided data
 
     Compute method from https://developer.garmin.com/fit/protocol/
     """
 
-    crc = 0
-
+    crc = initial_crc
+    table = BYTE_TABLE
     for byte in data:
-        crc = apply_crc(crc, byte)
+        crc = (crc >> 8) ^ table[(crc ^ byte) & 0xFF]
 
     return crc

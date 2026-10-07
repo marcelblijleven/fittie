@@ -2,17 +2,17 @@ from __future__ import annotations  # Added for type hints
 
 import functools
 import itertools
-
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Iterable, cast, TypedDict
+from collections.abc import Iterable
+from typing import Any, TypedDict, cast
 
-from fittie.profile.messages import MESSAGES
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.header import Header
+from fittie.fitfile.util import datetime_from_timestamp
 from fittie.profile.fit_types import FIT_TYPES
 from fittie.profile.mesg_nums import MESG_NUMS
-from fittie.fitfile.util import datetime_from_timestamp
+from fittie.profile.messages import MESSAGES
 
 
 class _IterableMixin(ABC):
@@ -74,11 +74,17 @@ class FitFile(_IterableMixin):
         data_messages: dict[str, list[DataMessage]],
         local_message_definitions: dict[int, DefinitionMessage],
         developer_data: dict[int, dict[str, Any]],
+        messages: list[DataMessage] | None = None,
     ):
         self.header = header
         self.data_messages = data_messages
         self.local_message_definitions = local_message_definitions
         self.developer_data = developer_data
+        self.messages = (
+            messages
+            if messages is not None
+            else list(itertools.chain.from_iterable(data_messages.values()))
+        )
 
     @functools.cached_property
     def _iter_collection(self) -> Iterable[DataMessage]:
@@ -87,7 +93,7 @@ class FitFile(_IterableMixin):
             message_type = self._iter_filter["message_type"]
             return self.data_messages.get(message_type, [])
 
-        return list(itertools.chain(*self.data_messages.values()))
+        return self.messages
 
     def __call__(self, *, message_type: str, fields: list[str] | None = None):
         """
@@ -106,7 +112,7 @@ class FitFile(_IterableMixin):
         return self
 
     @property
-    def file_id(self) -> Optional[dict[str, Any]]:
+    def file_id(self) -> dict[str, Any] | None:
         """
         Get file id information.
 
@@ -122,14 +128,13 @@ class FitFile(_IterableMixin):
 
         # Should be just one file_id, but to be sure use latest from list
         for key, value in file_id_messages[-1].fields.items():
-            if not value:
+            if value is None:
                 continue
-            if key == "time_created":
+            if key == "time_created" and isinstance(value, int):
                 file_id[key] = datetime_from_timestamp(cast(int, value))
-            elif key == "type":
-                file_id[key] = FIT_TYPES["file"].values[value].value_name
-            elif key == "manufacturer":
-                file_id[key] = FIT_TYPES["manufacturer"].values[value].value_name
+            elif key in ("type", "manufacturer") and isinstance(value, int):
+                enum = FIT_TYPES["file" if key == "type" else key].values.get(value)
+                file_id[key] = enum.value_name if enum else value
             else:
                 file_id[key] = value
 
@@ -154,23 +159,48 @@ class FitFile(_IterableMixin):
 
     @functools.cached_property
     def available_fields(self) -> dict[str, str | None]:
-        """Returns a list of all field names as key, with units as value"""
+        """Names actually present, including derived fields and earlier definitions."""
         fields: dict[str, str | None] = {}
-
-        for definition_message in self.local_message_definitions.values():
-            if (message_profile := MESSAGES.get(definition_message.global_message_type)) is None:
-                for field_definition in definition_message.field_definitions:
-                    field_name = f"unknown_field_{field_definition.number}"
-                    fields[field_name] = ""
-            else:
-                for field_definition in definition_message.field_definitions:
-                    if field_definition.number not in message_profile.fields:
-                        field_name = f"unknown_field_{field_definition.number}"
-                        fields[field_name] = ""
+        units: dict[int, dict[str, str | None]] = {}
+        developer_units: dict[tuple[int, int], tuple[str, str | None]] = {}
+        for message in self.messages:
+            definition = message.definition
+            if definition is None:
+                for name in message.fields:
+                    fields.setdefault(name, None)
+                continue
+            number = definition.global_message_type
+            if number not in units:
+                profile = MESSAGES.get(number)
+                lookup = {}
+                if profile:
+                    for field in profile.fields.values():
+                        lookup[field.field_name] = field.units
+                        for sub in field.subfields or ():
+                            lookup[sub.field_name] = sub.units
+                units[number] = lookup
+            for name in message.fields:
+                fields.setdefault(name, units[number].get(name))
+            if number == 206:
+                developer_index = message.fields.get("developer_data_index")
+                developer_number = message.fields.get("field_definition_number")
+                description_name = message.fields.get("field_name")
+                if (
+                    isinstance(developer_index, int)
+                    and isinstance(developer_number, int)
+                    and isinstance(description_name, str)
+                ):
+                    developer_units[(developer_index, developer_number)] = (
+                        description_name,
+                        message.fields.get("units"),
+                    )
+            for key in message.developer_fields or ():
+                if key in developer_units:
+                    name, unit = developer_units[key]
+                    if name in message.fields and name not in units[number]:
+                        fields[name] = unit
                     else:
-                        field = message_profile.fields[field_definition.number]
-                        fields[field.field_name] = field.units
-
+                        fields[f"developer_{key[0]}_{key[1]}_{name}"] = unit
         return fields
 
     def get_messages_by_type(self, message_type: str) -> list[DataMessage]:
@@ -180,7 +210,22 @@ class FitFile(_IterableMixin):
 
         If the provided message type is unknown, a ValueError will be raised.
         """
-        if message_type not in MESG_NUMS.values():
+        if (
+            message_type not in MESG_NUMS.values()
+            and message_type not in self.data_messages
+        ):
             raise ValueError(f"unknown message type '{message_type}' received")
 
         return self.data_messages.get(message_type, [])
+
+    def encode(self, destination=None) -> bytes:
+        """Encode this member in wire order, including definition re-use."""
+        from fittie.fitfile.encode import encode
+
+        return encode(self, destination)
+
+    def validate(self):
+        """Check published common file-type requirements without changing data."""
+        from fittie.fitfile.validation import validate
+
+        return validate(self)

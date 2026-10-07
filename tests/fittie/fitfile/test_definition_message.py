@@ -1,15 +1,15 @@
-import pytest
-
 from io import BytesIO
 
-from fittie.fitfile.utils.exceptions import DecodeException
+import pytest
+
 from fittie.fitfile.definition_message import (
-    decode_definition_message,
     DefinitionMessage,
+    decode_definition_message,
 )
 from fittie.fitfile.field_definitions import DeveloperFieldDefinition
 from fittie.fitfile.records import RecordHeader
 from fittie.fitfile.utils.endianness import Endianness
+from fittie.fitfile.utils.exceptions import DecodeException
 
 
 def test_decode_definition_message_example_record_1():

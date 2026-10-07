@@ -2,76 +2,29 @@
 
 ## Usage
 
-Decoding / parsing a FIT file is done through the `decode` function in the 
-`fittie.fitfile` package. It accepts the following types of arguments:
-
-- A file path string
-- A file opened in "rb" mode
-- A buffered reader, BinaryIO or BytesIO
+Pass a path (`str` or `pathlib.Path`) or a binary stream to `decode`.
+Paths are opened and closed automatically; caller-provided streams remain open.
 
 ```python
-# Examples
-from io import BytesIO
 from fittie import decode
 
-fitfile_1 = decode("/path/to/fit/file.fit")         # Path to file
+with open("path/to/activity.fit", "rb") as source:
+    fitfiles = decode(source)
 
-fitfile_2 = decode(BytesIO(...))                    # BytesIO
-
-with open("/path/to/fit/file.fit", "rb") as f:      # File opened in rb mode
-    fitfile_3 = decode(f)
+for fitfile in fitfiles:
+    print(fitfile.available_message_types)
+    records = fitfile.get_messages_by_type("record")
+    for record in records:
+        print(record.fields)
 ```
 
-To view the available message types in the fitfile, use the `available_message_types` 
-property. It will return a list of message type keys. These keys can be used to retrieve
-all messages of a certain kind. After retrieving the available message types, 
-the messages can be retrieved using `get_messages_by_type`.
+`fitfile.data_messages` groups `DataMessage` objects by message name. Iterating a
+`FitFile` directly yields field dictionaries. The `file_type` property reads the
+`file_id` message; ordinary field values retain numeric enum and timestamp values.
 
-```python
-fitfile = decode("/path/to/fit/file.fit")
+## Integrity checks
 
-types = fitfile.available_message_types
-# e.g. [ 'file_id', 'device_info', 'record', 'event', 'lap', 'session', 'activity']
-messages = fitfile.get_messages_by_type('record')  # Returns a list of `DataMessage`
-```
-
-Alternatively, you can interact with the `data_messages` property of `fitfile` directly,
-this is a simple dict.
-
-### File types
-
-All FIT files should contain a file id message that describes the type of file. Common 
-file types are `activity`, `workout` and `course`. More file types can be found in 
-`fit_types.py`.
-
-To retrieve the type of the decoded `fitfile`, use the `.file_type` property.
-
-```pycon
-assert fitfile.file_type == "activity"
-```
-
-### CRC
-
-A crc check is done by default, but can be disabled by providing `calculate_crc=False`
-to the `decode` function to improve speed.
-
-For example, on the same FIT file with 58297 data messages, decoding with crc takes 0.029 seconds and without
-crc it only takes 0.014 seconds.
-
-### DataMessages
-
-To access data in a `DataMessage`, use the `fields` property. This will return a dict
-with all the values inside the message.
-
-```python
-fitfile = decode("/path/to/fit/file.fit")
-
-for record in fitfile.get_messages_by_type("record")[:5]:
-    print(record.fields)
-
-# {'timestamp': 1044776016}
-# {'timestamp': 1044776016, 'heart_rate': 117}
-# {'timestamp': 1044776017, 'heart_rate': 116}
-# {'timestamp': 1044776017, 'heart_rate': 115}
-# {'timestamp': 1044776018, 'heart_rate': 115}
-```
+Header and file CRCs are checked by default. `decode(source, calculate_crc=False)`
+skips checksum verification but still validates the header and data boundaries.
+Malformed or truncated FIT members raise `DecodeException`; complete earlier
+members are not silently returned as a successful partial decode.

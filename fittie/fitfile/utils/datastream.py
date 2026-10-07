@@ -1,12 +1,12 @@
 import os.path
 from pathlib import Path
-from typing import Protocol, Optional, BinaryIO, Any, Union
+from typing import Any, BinaryIO, Protocol
 
-from fittie.fitfile.crc import apply_crc
+from fittie.fitfile.crc import calculate_crc
 
 
 class Streamable(Protocol):
-    def read(self, size: Optional[int] = 1) -> bytes: ...
+    def read(self, size: int = 1) -> bytes: ...
 
     def tell(self) -> int: ...
 
@@ -20,11 +20,10 @@ class DataStream:
     It allows a path, file content or a BinaryIO/Streamable to be provided as
     initial value.
 
-    TODO: include CRC check
     """
 
     _data: BinaryIO
-    _path: Optional[Union[str, Path]]
+    _path: str | Path | None
     _calculated_crc: int
 
     should_calculate_crc: bool
@@ -32,6 +31,9 @@ class DataStream:
     def __init__(self, value: Any):
         self.should_calculate_crc = True
         self._calculated_crc = 0
+        self.limit: int | None = None
+        self._path = None
+        self._position = 0
 
         if DataStream.is_file(value):
             self._data = value
@@ -44,6 +46,12 @@ class DataStream:
                 f"unsupported value received as stream input: {type(value)}"
             )
 
+        if self._path is None:
+            try:
+                self._position = self._data.tell()
+            except (AttributeError, OSError):
+                self._position = 0
+
     @property
     def calculated_crc(self) -> int:
         """Returns the calculated crc, or 0 if crc calculation is disabled"""
@@ -53,38 +61,49 @@ class DataStream:
         """Resets the calculated crc back to 0"""
         self._calculated_crc = 0
 
-    def read(self, size: int = 1) -> bytes:
+    def read(self, size: int = 1, *, allow_eof: bool = False) -> bytes:
         """
-        Reads the provided number of bits from the wrapped BinaryIO data
+        Reads the provided number of bytes from the wrapped BinaryIO data
 
         If a crc should be calculated, the internal crc property will be calculated
         for each byte that was read.
         """
-        if not self.should_calculate_crc:
-            return self._data.read(size)
-
+        if self.limit is not None and self._position + size > self.limit:
+            raise EOFError("record extends beyond the FIT data section")
         value = self._data.read(size)
-
-        if len(value) != size:
-            raise EOFError
-
-        for idx in range(0, size):
-            self._calculated_crc = apply_crc(self._calculated_crc, value[idx])
+        received = len(value)
+        if received != size:
+            if allow_eof and not value:
+                return value
+            chunks = [value]
+            while received < size and value:
+                value = self._data.read(size - received)
+                received += len(value)
+                chunks.append(value)
+            value = b"".join(chunks)
+            if received != size:
+                self._position += received
+                raise EOFError("truncated FIT data")
+        self._position += received
+        if self.should_calculate_crc:
+            self._calculated_crc = calculate_crc(value, self._calculated_crc)
         return value
 
     def tell(self) -> int:
         """Returns the current stream position"""
-        return self._data.tell()
+        return self._position
 
     def __enter__(self):
-        if not hasattr(self, "_path"):
+        if self._path is None:
             return self
 
         self._data = open(self._path, "rb")
+        self._position = 0
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._data.close()
+        if self._path is not None:
+            self._data.close()
 
     @staticmethod
     def is_file(value) -> bool:
@@ -98,12 +117,12 @@ class DataStream:
             return False
 
         if (mode := getattr(value, "mode")) != "rb":
-            raise IOError(f"expected file to be opened with mode 'rb', got '{mode}'")
+            raise OSError(f"expected file to be opened with mode 'rb', got '{mode}'")
 
         return True
 
     @staticmethod
-    def is_path(value: Union[str, Path]) -> bool:
+    def is_path(value: str | Path) -> bool:
         """
         Check if the provided value is either a path string or Path, and checks if the
         file exists.
@@ -121,4 +140,4 @@ class DataStream:
     @staticmethod
     def is_streamable(value: Streamable) -> bool:
         """Check if the provided value has a read and tell method"""
-        return hasattr(value, "read") and hasattr(value, "tell")
+        return hasattr(value, "read")

@@ -1,17 +1,19 @@
 from __future__ import annotations  # Added for type hints
 
-import struct
-from typing import Optional, Any
+from dataclasses import dataclass
+from typing import Any
 
-from fittie.fitfile.utils.datastream import Streamable
-from fittie.fitfile.utils.exceptions import DecodeException
-from fittie.fitfile.data_message import decode_data_message, DataMessage
+from fittie.fitfile.components import Accumulators
+from fittie.fitfile.data_message import DataMessage, decode_data_message
 from fittie.fitfile.definition_message import (
     DefinitionMessage,
     decode_definition_message,
 )
+from fittie.fitfile.utils.datastream import Streamable
+from fittie.fitfile.utils.exceptions import DecodeException
 
 
+@dataclass(frozen=True, slots=True)
 class RecordHeader:
     """
     A one byte header to determine of the record is either a DefinitionMessage,
@@ -34,21 +36,7 @@ class RecordHeader:
     is_developer_data: bool
     local_message_type: int
     is_compressed_timestamp_message: bool
-    time_offset: Optional[int]
-
-    def __init__(
-        self,
-        is_definition_message: bool,
-        is_developer_data: bool,
-        local_message_type: int,
-        is_compressed_timestamp_message: bool,
-        time_offset: Optional[int] = None,
-    ):
-        self.is_definition_message = is_definition_message
-        self.is_developer_data = is_developer_data
-        self.local_message_type = local_message_type
-        self.is_compressed_timestamp_message = is_compressed_timestamp_message
-        self.time_offset = time_offset
+    time_offset: int | None = None
 
     def __str__(self) -> str:
         return (
@@ -57,68 +45,37 @@ class RecordHeader:
         ).replace("self.", " ")
 
 
+# Headers contain only immutable byte-derived attributes and can be shared.
+_RECORD_HEADERS = tuple(
+    RecordHeader(
+        is_definition_message=bool(value & 0x40) if value < 128 else False,
+        is_developer_data=bool(value & 0x20) if value < 128 else False,
+        local_message_type=value & 0x0F if value < 128 else (value >> 5) & 3,
+        is_compressed_timestamp_message=value >= 128,
+        time_offset=value & 31 if value >= 128 else None,
+    )
+    for value in range(256)
+)
+
+
 def read_record_header(data: Streamable) -> RecordHeader:
-    try:
-        (value,) = struct.unpack("B", data.read(1))
-
-        # Use a bit mask to get bit 7 to determine if this is a normal (0) or
-        # compressed timestamp header (1)
-        if is_compressed_timestamp_message := bool(value >> 7):
-            is_definition_message = False
-            is_developer_data = False
-
-            # Shift 5 places to the right to get bits 7, 6 and 5
-            # then apply mask 0b011 to get bits 6 and 5
-            local_message_type = (value >> 5) & 0b011
-
-            # Apply mask 0b11111 to get bit 4, 3, 2, 1 and 0
-            time_offset = value & 0b111111
-        else:
-            # Apply mask 0b1000000 to get bit 6 to determine if the message
-            # is a definition message
-            is_definition_message = bool(value & 0b1000000)
-
-            # Apply mask 0b100000 to determine if message contains developer data
-            is_developer_data = bool(value & 0b100000)
-
-            # Bit 4 is reserved and always 0, extra validity check
-            if bool(value & 0b10000):
-                raise DecodeException(
-                    detail="invalid byte received for record header",
-                    position=data.tell(),
-                )
-
-            # Apply mask 0b1111 to get bit 3, 2, 1, and 0
-            local_message_type = value & 0b1111
-            time_offset = None
-
-        return RecordHeader(
-            is_definition_message=is_definition_message,
-            is_developer_data=is_developer_data,
-            local_message_type=local_message_type,
-            is_compressed_timestamp_message=is_compressed_timestamp_message,
-            time_offset=time_offset,
-        )
-
-    except struct.error as exc:
+    raw = data.read(1)
+    if not raw:
         raise DecodeException(
-            detail="could not decode record header with provided data",
-            position=data.tell(),
-        ) from exc
+            detail="could not decode record header", position=data.tell()
+        )
+    return _RECORD_HEADERS[raw[0]]
 
 
 def read_message(
     local_message_definitions: dict[int, DefinitionMessage],
     developer_data: dict[int, dict[str, Any]],
     data: Streamable,
+    previous_timestamp: int | None = None,
+    accumulators: Accumulators | None = None,
 ) -> DefinitionMessage | DataMessage:
     record_header = read_record_header(data)
     definition_message = local_message_definitions.get(record_header.local_message_type)
-
-    if record_header.is_compressed_timestamp_message:
-        # TODO
-        ...
-        return  # type:ignore[return-value]
 
     if record_header.is_developer_data or record_header.is_definition_message:
         return decode_definition_message(record_header, data)
@@ -132,7 +89,18 @@ def read_message(
         )
 
     message = decode_data_message(
-        record_header, definition_message, developer_data, data
+        record_header, definition_message, developer_data, data, accumulators
     )
 
+    if record_header.is_compressed_timestamp_message:
+        if previous_timestamp is None or record_header.time_offset is None:
+            raise DecodeException(
+                detail="compressed timestamp requires a preceding full timestamp",
+                position=data.tell(),
+            )
+        offset = record_header.time_offset
+        timestamp = (previous_timestamp & ~0x1F) + offset
+        if offset < (previous_timestamp & 0x1F):
+            timestamp += 0x20
+        message.fields["timestamp"] = timestamp
     return message

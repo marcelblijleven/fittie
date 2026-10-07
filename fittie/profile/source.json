@@ -1,0 +1,9 @@
+{
+  "version": "21.217.0",
+  "source_url": "https://github.com/garmin/fit-sdk-tools/releases/download/21.217.0/Profile.xlsx",
+  "sha256": "7b3b4f683654ec7c2932ec484f519eef4403aa006e8e94e50afc8f49b463e222",
+  "messages": 125,
+  "fields": 1566,
+  "subfields": 163,
+  "types": 215
+}

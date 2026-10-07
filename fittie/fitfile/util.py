@@ -20,7 +20,7 @@ def rollover_timestamp(previous_timestamp: int, offset: int) -> int:
     The actual timestamp is calculated by concatenating the most significant 27 bits
     of the previous timestamp value and the 5 bit value of the offset field
     """
-    max_length = 0b1111  # 0x0000001F
+    max_length = 0b11111  # 0x0000001F
 
     if offset >= previous_timestamp & max_length:
         # Offset value is greater than least significant 5 bits of previous timestamp
@@ -36,10 +36,7 @@ def datetime_from_timestamp(timestamp: int) -> datetime:
     """
     Create a datetime from a timestamp using the Garmin FIT epoch, in UTC.
     """
-    # NOTE: replace this with datetime.fromtimestamp(ts + epoch, UTC) when minimum version > 3.10
-    dt = datetime.utcfromtimestamp(timestamp + FIT_EPOCH)
-    dt = dt.replace(tzinfo=timezone.utc)
-    return dt
+    return datetime.fromtimestamp(timestamp + FIT_EPOCH, tz=timezone.utc)
 
 
 def is_definition_message(

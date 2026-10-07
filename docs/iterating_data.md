@@ -11,7 +11,7 @@ with the `data_messages` property, you will have access to the `DataMessage` ins
 ### Direct iterate
 
 The easiest way is to directly iterate over the decoded `fitfile` variable. This will
-'chain' all the data messages of various types together in a single loop. The return value
+iterate all data messages in their original wire order. The return value
 will be a `dict` of field data.
 
 ```pycon
@@ -19,8 +19,8 @@ will be a `dict` of field data.
 >>> fitfiles = decode("/path/to/fit/file.fit")
 
 >>> for fitfile in fitfiles:
-...    for data in fitfile:
-...        print(data)
+...     for data in fitfile:
+...         print(data)
 
 {'serial_number': 1234, 'time_created': 1046114779, 'manufacturer': 260, 'type': 4}
 {'timestamp': 1046119077, 'power': 204, 'heart_rate': 123, 'speed': 12500}
@@ -39,8 +39,8 @@ the fields that were provided in the filter.
 >>> fitfiles = decode("/path/to/fit/file.fit")
 
 >>> for fitfile in fitfiles:
-...    for data in fitfile(message_type="record", fields=["timestamp", "power"]):
-...        print(data)
+...     for data in fitfile(message_type="record", fields=["timestamp", "power"]):
+...         print(data)
 
 {'timestamp': 1046119077, 'power': 204}
 ```
@@ -72,3 +72,8 @@ The FIT file has a number of helper methods and properties to make interacting w
 >>> fitfile.get_messages_by_type("record")
 [DataMessage(...), DataMessage(...), DataMessage(...)]
 ```
+
+
+`fitfile.messages` provides wire-order `DataMessage` objects; grouped access through
+`data_messages` is unchanged. For bounded-memory decoding, use `iter_messages` or
+`iter_files`; see [streaming and callbacks](decoding.md#streaming-and-callbacks).

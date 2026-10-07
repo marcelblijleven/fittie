@@ -1,120 +1,98 @@
 # fittie
 
-Parse Garmin .FIT files
+Read and write Garmin FIT files with a dependency-free Python library. Requires Python 3.10 or newer; development and CI include Python 3.14.
 
 [![PyPI version](https://img.shields.io/pypi/v/fittie?color=green)](https://pypi.org/project/fittie/)
 
 ## Installation
 
-Fittie is available on pypi and can be installed with the following command.
-
 ```shell
-$ pip install fittie
+pip install fittie
 ```
 
 ## Example
 
+`decode()` returns a list of `FitFile` objects, including one object for each member of a chained FIT stream.
+
 ```python
 from fittie import decode
 
-if __name__ == "__main__":
-    fitfile = decode("path/to/fit/file.fit")
-        
-    # Example: get average heart rate
-    print(fitfile.average_heart_rate)
-
-    # Loop through all data messages:
-    for data_message in fitfile:
-        print(data_message)
+for fitfile in decode("path/to/activity.fit"):
+    print(fitfile.file_type)
+    for record in fitfile.get_messages_by_type("record"):
+        print(record.fields.get("timestamp"), record.fields.get("heart_rate"))
 ```
 
-For more information and examples, check [the documentation](https://marcelblijleven.github.io/fittie/)
+See [the documentation](https://marcelblijleven.github.io/fittie/) for filtering and analysis examples.
 
 <!-- fitfile section -->
 ## Fitfile
 
 ### Usage
 
-Decoding / parsing a FIT file is done through the `decode` function in the 
-`fittie.fitfile` package. It accepts the following types of arguments:
-
-- A file path string
-- A file opened in "rb" mode
-- A buffered reader, BinaryIO or BytesIO
+Pass a path (`str` or `pathlib.Path`) or a binary stream to `decode`.
+Paths are opened and closed automatically; caller-provided streams remain open.
 
 ```python
-# Examples
-from io import BytesIO
-from fittie.fitfile import decode
+from fittie import decode
 
-fitfile_1 = decode("/path/to/fit/file.fit")         # Path to file
+with open("path/to/activity.fit", "rb") as source:
+    fitfiles = decode(source)
 
-fitfile_2 = decode(BytesIO(...))                    # BytesIO
-
-with open("/path/to/fit/file.fit", "rb") as f:      # File opened in rb mode
-    fitfile_3 = decode(f)
+for fitfile in fitfiles:
+    print(fitfile.available_message_types)
+    records = fitfile.get_messages_by_type("record")
+    for record in records:
+        print(record.fields)
 ```
 
-To view the available message types in the fitfile, use the `available_message_types` 
-property. It will return a list of message type keys. These keys can be used to retrieve
-all messages of a certain kind. After retrieving the available message types, 
-the messages can be retrieved using `get_messages_by_type`.
+`fitfile.data_messages` groups `DataMessage` objects by message name. Iterating a
+`FitFile` directly yields field dictionaries. The `file_type` property reads the
+`file_id` message; ordinary field values retain numeric enum and timestamp values.
 
-```python
-fitfile = decode("/path/to/fit/file.fit")
+### Integrity checks
 
-types = fitfile.available_message_types
-# e.g. [ 'file_id', 'device_info', 'record', 'event', 'lap', 'session', 'activity']
-messages = fitfile.get_messages_by_type('record')  # Returns a list of `DataMessage`
-```
-
-Alternatively, you can interact with the `messages` property of `fitfile` directly, this
-is a simple dict.
-
-#### File types
-
-All FIT files should contain a file id message that describes the type of file. Common 
-file types are `activity`, `workout` and `course`. More file types can be found in 
-`fit_types.py`.
-
-To retrieve the type of the decoded `fitfile`, use the `.file_type` property.
-
-```pycon
-assert fitfile.file_type == "activity"
-```
-
-#### CRC
-
-A crc check is done by default, but can be disabled by providing `calculate_crc=False`
-to the `decode` function to improve speed.
-
-For example, on the same FIT file with 58297 data messages, decoding with crc takes 0.029 seconds and without
-crc it only takes 0.014 seconds.
-
-#### DataMessages
-
-To access data in a `DataMessage`, use the `fields` property. This will return a dict
-with all the values inside the message.
-
-```python
-fitfile = decode("/path/to/fit/file.fit")
-
-for record in fitfile.get_messages_by_type("record")[:5]:
-    print(record.fields)
-
-# {'timestamp': 1044776016}
-# {'timestamp': 1044776016, 'heart_rate': 117}
-# {'timestamp': 1044776017, 'heart_rate': 116}
-# {'timestamp': 1044776017, 'heart_rate': 115}
-# {'timestamp': 1044776018, 'heart_rate': 115}
-```
+Header and file CRCs are checked by default. `decode(source, calculate_crc=False)`
+skips checksum verification but still validates the header and data boundaries.
+Malformed or truncated FIT members raise `DecodeException`; complete earlier
+members are not silently returned as a successful partial decode.
 
 <!-- end fitfile section -->
 
-## TODO:
- * Handle component fields
- * Handle accumulators
- * Handle chained FIT files
- * Handle compressed timestamps
- * move record_header into record, instead of reading it separately
- * encoding
+## FIT compatibility
+
+The bundled profile is **[21.217.0](https://github.com/garmin/fit-sdk-tools/releases/tag/21.217.0)**,
+the latest Garmin SDK Tools release checked on September 30, 2026.
+Fittie supports native components and counters, developer data, string arrays,
+chained files, compressed timestamp decoding, encoding, optional enum/date
+conversions, HR merging, streaming, callbacks, and common file-type validation.
+
+```python
+from fittie import Encoder, encode, iter_messages, validate
+
+for message in iter_messages("activity.fit"):
+    print(message.fields)
+
+files = decode("activity.fit")
+encode(files, "copy.fit")
+issues = validate(files[0])
+```
+
+See the [API guide](docs/decoding.md) for options and encoding examples, and the
+[compatibility audit](docs/development/fit-compatibility.md) for scope, independent
+Garmin comparisons, and measured performance. Interoperability is tested against
+Garmin SDK 21.217.0; it is not a claim of device certification.
+
+## Development
+
+```shell
+uv sync --locked --all-groups
+uv run pytest
+uv run mypy fittie
+uv run ruff check .
+uv run ruff format --check .
+uv build
+```
+
+Dependencies and tool configuration live in `pyproject.toml`; `uv.lock` records
+resolved versions. See [development setup](docs/development/installing.md).

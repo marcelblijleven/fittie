@@ -15,8 +15,8 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-          version: "0.6.9"
-          python-version: 3.12
+          version: "latest"
+          python-version: "3.14"
       - run: uv python install
-      - run: uv sync --group docs
-      - run: mkdocs gh-deploy --force
+      - run: uv sync --locked --group docs
+      - run: uv run --locked mkdocs gh-deploy --force

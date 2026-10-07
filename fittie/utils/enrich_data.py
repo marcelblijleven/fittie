@@ -2,8 +2,8 @@ from __future__ import annotations  # Added for type hints
 
 from typing import Any
 
-from fittie.profile.fit_types import FIT_TYPES
 from fittie.fitfile.util import datetime_from_timestamp
+from fittie.profile.fit_types import FIT_TYPES
 
 
 def enrich_data(fields: dict[str, Any]) -> None:

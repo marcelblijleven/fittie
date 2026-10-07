@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
 [project]
 name = "fittie"
 version = "1.0.0"
@@ -6,26 +10,45 @@ readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Marcel Blijleven" }]
 maintainers = [{ name = "Marcel Blijleven" }]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["fit", "fitfile", "fitfile decode", "decoding", "garmin"]
 classifiers = [
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["fittie"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/fittie", "/tests", "/pyproject.toml", "/README.md", "/LICENSE", "/scripts/parse_profile.py"]
 
 [tool.ruff]
 line-length = 88
-exclude = [".git", "*.json", "fittie/fitfile/profile/fit_types.py"]
+target-version = "py310"
+extend-exclude = ["fittie/profile/fit_types.py", "fittie/profile/messages.py", "fittie/profile/mesg_nums.py"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.mypy]
+python_version = "3.10"
+check_untyped_defs = true
 
 [tool.coverage.run]
 omit = [
-  "fittie/fitfile/profile/fit_types.py",
-  "fittie/fitfile/profile/mesg_nums.py",
-  "fittie/fitfile/profile/messages.py",
+  "fittie/profile/fit_types.py",
+  "fittie/profile/mesg_nums.py",
+  "fittie/profile/messages.py",
 ]
 
 [tool.commitizen]
@@ -40,12 +63,13 @@ change_type_map = { "feat" = "Features ✨", "fix" = "Bugfixes 🐛" }
 [dependency-groups]
 dev = [
     "commitizen>=4.4.1",
-    "mypy>=1.15.0",
-    "pytest>=8.3.5",
-    "pytest-cov>=6.0.0",
-    "ruff>=0.11.2",
+    "mypy>=1.19",
+    "openpyxl>=3.1.5,<4",
+    "pytest>=9",
+    "pytest-cov>=7",
+    "ruff>=0.15",
 ]
 docs = [
-    "mkdocs==1.4.2",
-    "mkdocs-material==9.0.15",
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.6,<10",
 ]

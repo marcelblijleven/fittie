@@ -1,11 +1,10 @@
 import io
-from unittest.mock import patch
-
-import pytest
 import tempfile
 
+import pytest
+
+from fittie.fitfile.crc import calculate_crc
 from fittie.fitfile.utils.datastream import DataStream
-from fittie.fitfile.crc import apply_crc
 
 
 def test_datastream_file():
@@ -51,27 +50,40 @@ def test_datastream_invalid_value():
 
 
 def test_datastream_crc():
-    datastream = DataStream(io.BytesIO(b"123"))
+    datastream = DataStream(io.BytesIO(b"123456"))
     assert datastream.calculated_crc == 0
-
-    with patch(
-        "fittie.fitfile.utils.datastream.apply_crc", side_effect=apply_crc
-    ) as patched_apply_crc:
-        datastream.read()
-
-    assert datastream.calculated_crc != 0
-    patched_apply_crc.assert_called_once()
+    assert datastream.read(2) == b"12"
+    assert datastream.calculated_crc == calculate_crc(b"12")
+    assert datastream.read(4) == b"3456"
+    assert datastream.calculated_crc == calculate_crc(b"123456")
 
 
 def test_datastream_crc__crc_disabled():
     datastream = DataStream(io.BytesIO(b"123"))
     datastream.should_calculate_crc = False
+    assert datastream.read(3) == b"123"
     assert datastream.calculated_crc == 0
 
-    with patch(
-        "fittie.fitfile.utils.datastream.apply_crc", side_effect=apply_crc
-    ) as patched_apply_crc:
-        datastream.read()
 
-    assert datastream.calculated_crc == 0
-    patched_apply_crc.assert_not_called()
+def test_position_tracks_reads_and_partial_reads():
+    source = io.BytesIO(b"prefix123")
+    source.read(6)
+    with DataStream(source) as stream:
+        assert stream.tell() == 6
+        assert stream.read(2) == b"12"
+        assert stream.tell() == 8
+        with pytest.raises(EOFError):
+            stream.read(2)
+        assert stream.tell() == 9
+    assert not source.closed
+
+
+def test_reopening_owned_stream_resets_position(tmp_path):
+    path = tmp_path / "stream.bin"
+    path.write_bytes(b"123")
+    stream = DataStream(path)
+    for _ in range(2):
+        with stream:
+            assert stream.tell() == 0
+            assert stream.read(3) == b"123"
+            assert stream.tell() == 3

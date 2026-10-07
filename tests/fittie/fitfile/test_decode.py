@@ -7,6 +7,7 @@ from fittie import decode
 
 def garmin_sdk_fitfile_names():
     from tests.conftest import DATA_DIR
+
     files = (DATA_DIR / "from_garmin_sdk").glob("*.fit")
 
     return [f.name for f in files]
@@ -16,7 +17,6 @@ def test_minimal_file(load_fit_file, data_dir):
     fitfiles = decode(data_dir / "fittie_minimal_file.fit")
     assert len(fitfiles) == 1
     for fitfile in fitfiles:
-
         header = fitfile.header
         assert header.length == 14
         assert header.protocol_version == 32
@@ -25,7 +25,9 @@ def test_minimal_file(load_fit_file, data_dir):
 
         developer_data = fitfile.developer_data.get(1)
         assert developer_data is not None
-        cleaned_application_id = [num for num in developer_data["application_id"] if num]
+        cleaned_application_id = [
+            num for num in developer_data["application_id"] if num
+        ]
         assert bytes(cleaned_application_id) == b"com.marcelblijleven.fittie"
         assert developer_data["application_version"] == 1337
 
@@ -43,13 +45,12 @@ def test_gearshifts(load_fit_file, data_dir):
         event_messages = fitfile.get_messages_by_type("event")
         assert len(event_messages) == 3
 
-        # NOTE: this isn't exactly as expected, the field gear_change_data has
-        # subfields and components, so it should be expanded into 4 fields.
-        # Have not figured out a fix yet, could be an error in the Profile.xlsx
-        # It expects a field name called 'event', but it is filled in as 'data'.
         assert event_messages[0].fields["data"] == 654380552
         assert event_messages[1].fields["data"] == 654380041
         assert event_messages[2].fields["data"] == 872549385
+        # This fixture has data but no event selector, so the gear subfield
+        # cannot be selected. Valid gear messages are covered in test_components.
+        assert "gear_change_data" not in event_messages[0].fields
 
 
 def test_developer_fields(load_fit_file, data_dir):
@@ -108,12 +109,16 @@ def test_chained_file(load_fit_file, data_dir):
 
         developer_data = fitfile.developer_data.get(1)
         assert developer_data is not None
-        cleaned_application_id = [num for num in developer_data["application_id"] if num]
+        cleaned_application_id = [
+            num for num in developer_data["application_id"] if num
+        ]
         assert bytes(cleaned_application_id) == b"com.marcelblijleven.fittie"
         assert developer_data["application_version"] == 1337
 
 
-@pytest.mark.parametrize("file_name", garmin_sdk_fitfile_names(), ids=garmin_sdk_fitfile_names())
+@pytest.mark.parametrize(
+    "file_name", garmin_sdk_fitfile_names(), ids=garmin_sdk_fitfile_names()
+)
 def test_garmin_sdk_fitfile(file_name, data_dir):
     # Just check if we can decode them for now
     assert decode(data_dir / "from_garmin_sdk" / file_name)

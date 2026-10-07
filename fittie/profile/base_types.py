@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import struct
-from typing import Optional, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from fittie.fitfile.utils.datastream import Streamable
 
@@ -29,7 +29,7 @@ class BaseType(Generic[T]):
         size: int,
         fmt: str,
         value_type: type[T],
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ):
         self.number = number
         self.endian_ability = endian_ability
@@ -50,7 +50,10 @@ class BaseType(Generic[T]):
         # TODO: check for endian ability before creating fmt_string?
         fmt_string = f"{endianness}{self.fmt}"
 
-        (value,) = struct.unpack(fmt_string, data.read(self.size))
+        raw = data.read(self.size)
+        if self.value_type is float and raw == b"\xff" * self.size:
+            return None
+        (value,) = struct.unpack(fmt_string, raw)
 
         if value == self.invalid_value:
             return None

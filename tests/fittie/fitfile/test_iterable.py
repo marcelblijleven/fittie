@@ -1,5 +1,5 @@
-from unittest import mock
 from functools import cached_property
+from unittest import mock
 
 from fittie.fitfile.fitfile import _IterableMixin  # noqa
 

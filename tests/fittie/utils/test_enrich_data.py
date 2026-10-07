@@ -1,6 +1,6 @@
-import pytest
-
 from datetime import datetime, timezone
+
+import pytest
 
 from fittie.utils.enrich_data import enrich_data
 

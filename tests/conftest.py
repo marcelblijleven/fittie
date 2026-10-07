@@ -1,14 +1,15 @@
 from pathlib import Path
 
 import pytest
+
 from fittie.fitfile.data_message import DataMessage
 from fittie.fitfile.definition_message import DefinitionMessage
 from fittie.fitfile.field_definitions import FieldDefinition
 from fittie.fitfile.fitfile import FitFile
 from fittie.fitfile.header import Header
-from fittie.profile.base_types import BASE_TYPES
 from fittie.fitfile.records import RecordHeader
 from fittie.fitfile.utils.endianness import Endianness
+from fittie.profile.base_types import BASE_TYPES
 
 DATA_DIR = Path(__file__).parent / "data"
 

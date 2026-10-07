@@ -1,0 +1,223 @@
+{
+  "description": "Profile refresh only; optimized decoder before and after. Warm profile caches, GC enabled, full materialization.",
+  "before_profile": "21.158.00",
+  "after_profile": "21.217.0",
+  "before": {
+    "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "module_root": "/private/tmp/fittie-profile-baseline",
+    "repeat": 5,
+    "loops": 2,
+    "results": [
+      {
+        "name": "synthetic_native",
+        "crc": true,
+        "messages": 20000,
+        "bytes": 280037,
+        "sha256": "a78be8f382be16620a4c8161146c8a38dbee021c04d2c27924eed51cb8fc278d",
+        "median_ms": 103.09116647113115,
+        "min_ms": 101.67612502118573,
+        "messages_per_second": 194003.04298235528
+      },
+      {
+        "name": "synthetic_native",
+        "crc": false,
+        "messages": 20000,
+        "bytes": 280037,
+        "sha256": "a78be8f382be16620a4c8161146c8a38dbee021c04d2c27924eed51cb8fc278d",
+        "median_ms": 87.03870797762647,
+        "min_ms": 84.92493751691654,
+        "messages_per_second": 229782.82266254516
+      },
+      {
+        "name": "synthetic_components",
+        "crc": true,
+        "messages": 20000,
+        "bytes": 100028,
+        "sha256": "7bce06e52c1e009dc41bc6866eac27b3573f03e5560b59c4829e5fce6854ab12",
+        "median_ms": 117.08493751939386,
+        "min_ms": 116.14299996290356,
+        "messages_per_second": 170816.16494595827
+      },
+      {
+        "name": "synthetic_components",
+        "crc": false,
+        "messages": 20000,
+        "bytes": 100028,
+        "sha256": "7bce06e52c1e009dc41bc6866eac27b3573f03e5560b59c4829e5fce6854ab12",
+        "median_ms": 108.48997952416539,
+        "min_ms": 107.77791647706181,
+        "messages_per_second": 184348.82269975115
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/Activity.fit",
+        "crc": true,
+        "messages": 3611,
+        "bytes": 94096,
+        "sha256": "949a238e1bb75c3684479785f76fa9a16888bb394518844248f488171d591387",
+        "median_ms": 26.733812468592077,
+        "min_ms": 26.55343752121553,
+        "messages_per_second": 135072.39209680038
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/Activity.fit",
+        "crc": false,
+        "messages": 3611,
+        "bytes": 94096,
+        "sha256": "949a238e1bb75c3684479785f76fa9a16888bb394518844248f488171d591387",
+        "median_ms": 20.70241648470983,
+        "min_ms": 20.274228998459876,
+        "messages_per_second": 174424.0824575708
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_lowbattery.fit",
+        "crc": true,
+        "messages": 4001,
+        "bytes": 136846,
+        "sha256": "f0809b5cf5edc511b5002485759b20edd0577788d8ce4098c5fba6aea2775776",
+        "median_ms": 45.7898749737069,
+        "min_ms": 44.91602099733427,
+        "messages_per_second": 87377.3951620838
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_lowbattery.fit",
+        "crc": false,
+        "messages": 4001,
+        "bytes": 136846,
+        "sha256": "f0809b5cf5edc511b5002485759b20edd0577788d8ce4098c5fba6aea2775776",
+        "median_ms": 37.56114549469203,
+        "min_ms": 36.854374979157,
+        "messages_per_second": 106519.64809128101
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_poolswim_with_hr.fit",
+        "crc": true,
+        "messages": 4590,
+        "bytes": 56694,
+        "sha256": "d8b32283a7225bb79d108de5defe84359b01836712fcc3ae4b35d385c702bf58",
+        "median_ms": 27.93760399799794,
+        "min_ms": 27.588416531216353,
+        "messages_per_second": 164294.69042259056
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_poolswim_with_hr.fit",
+        "crc": false,
+        "messages": 4590,
+        "bytes": 56694,
+        "sha256": "d8b32283a7225bb79d108de5defe84359b01836712fcc3ae4b35d385c702bf58",
+        "median_ms": 23.800854047294706,
+        "min_ms": 23.444645979907364,
+        "messages_per_second": 192850.22255416572
+      }
+    ]
+  },
+  "after": {
+    "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "module_root": "/Users/marcelblijleven/repos/github.com/marcelblijleven/fittie",
+    "repeat": 5,
+    "loops": 2,
+    "results": [
+      {
+        "name": "synthetic_native",
+        "crc": true,
+        "messages": 20000,
+        "bytes": 280037,
+        "sha256": "a78be8f382be16620a4c8161146c8a38dbee021c04d2c27924eed51cb8fc278d",
+        "median_ms": 102.22470853477716,
+        "min_ms": 101.2029999983497,
+        "messages_per_second": 195647.41525475652
+      },
+      {
+        "name": "synthetic_native",
+        "crc": false,
+        "messages": 20000,
+        "bytes": 280037,
+        "sha256": "a78be8f382be16620a4c8161146c8a38dbee021c04d2c27924eed51cb8fc278d",
+        "median_ms": 84.01404152391478,
+        "min_ms": 83.63829151494429,
+        "messages_per_second": 238055.44450931996
+      },
+      {
+        "name": "synthetic_components",
+        "crc": true,
+        "messages": 20000,
+        "bytes": 100028,
+        "sha256": "7bce06e52c1e009dc41bc6866eac27b3573f03e5560b59c4829e5fce6854ab12",
+        "median_ms": 117.98379203537479,
+        "min_ms": 116.96481250692159,
+        "messages_per_second": 169514.8092375557
+      },
+      {
+        "name": "synthetic_components",
+        "crc": false,
+        "messages": 20000,
+        "bytes": 100028,
+        "sha256": "7bce06e52c1e009dc41bc6866eac27b3573f03e5560b59c4829e5fce6854ab12",
+        "median_ms": 107.85245802253485,
+        "min_ms": 107.4656670098193,
+        "messages_per_second": 185438.5182006809
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/Activity.fit",
+        "crc": true,
+        "messages": 3611,
+        "bytes": 94096,
+        "sha256": "949a238e1bb75c3684479785f76fa9a16888bb394518844248f488171d591387",
+        "median_ms": 26.666228950489312,
+        "min_ms": 26.39910450670868,
+        "messages_per_second": 135414.7227455549
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/Activity.fit",
+        "crc": false,
+        "messages": 3611,
+        "bytes": 94096,
+        "sha256": "949a238e1bb75c3684479785f76fa9a16888bb394518844248f488171d591387",
+        "median_ms": 20.92147897928953,
+        "min_ms": 20.8586665103212,
+        "messages_per_second": 172597.74051225442
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_lowbattery.fit",
+        "crc": true,
+        "messages": 4001,
+        "bytes": 136846,
+        "sha256": "f0809b5cf5edc511b5002485759b20edd0577788d8ce4098c5fba6aea2775776",
+        "median_ms": 46.223479497712106,
+        "min_ms": 46.08845798065886,
+        "messages_per_second": 86557.7417251342
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_lowbattery.fit",
+        "crc": false,
+        "messages": 4001,
+        "bytes": 136846,
+        "sha256": "f0809b5cf5edc511b5002485759b20edd0577788d8ce4098c5fba6aea2775776",
+        "median_ms": 38.17191650159657,
+        "min_ms": 37.18691651010886,
+        "messages_per_second": 104815.27695452899
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_poolswim_with_hr.fit",
+        "crc": true,
+        "messages": 4590,
+        "bytes": 56694,
+        "sha256": "d8b32283a7225bb79d108de5defe84359b01836712fcc3ae4b35d385c702bf58",
+        "median_ms": 28.456353989895433,
+        "min_ms": 27.70681254332885,
+        "messages_per_second": 161299.6521490372
+      },
+      {
+        "name": "tests/data/from_garmin_sdk/activity_poolswim_with_hr.fit",
+        "crc": false,
+        "messages": 4590,
+        "bytes": 56694,
+        "sha256": "d8b32283a7225bb79d108de5defe84359b01836712fcc3ae4b35d385c702bf58",
+        "median_ms": 23.792624997440726,
+        "min_ms": 23.563062481116503,
+        "messages_per_second": 192916.9228066986
+      }
+    ]
+  }
+}
